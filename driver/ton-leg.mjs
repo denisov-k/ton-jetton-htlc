@@ -39,6 +39,11 @@ export async function tonWallet(client, mnemonicFile) {
   const key = await mnemonicToPrivateKey(mnemonic);
   const wallet = client.open(WalletContractV4.create({ workchain: 0, publicKey: key.publicKey }));
   const send = async (to, value, body, init) => {
+    // running out of gas looks exactly like a network fault from the outside; say which it is
+    const have = await retry(() => client.getBalance(wallet.address));
+    if (have < value + 10000000n) {
+      throw new Error(`not enough TON for gas: have ${Number(have) / 1e9}, need about ${Number(value + 10000000n) / 1e9}`);
+    }
     const seqno = await retry(() => wallet.getSeqno());
     // re-sending the same external message is harmless: the wallet accepts one seqno once
     await retry(() => wallet.sendTransfer({ seqno, secretKey: key.secretKey,

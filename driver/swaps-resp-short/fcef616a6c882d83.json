@@ -1,0 +1,24 @@
+{
+  "id": "fcef616a6c882d83",
+  "hash": "fcef616a6c882d83f9b433fc00e09eee1e15b1e9c815960cdc16798d94fec26a",
+  "frcAmount": "100000000",
+  "jettonAmount": "500",
+  "frcCltv": 3982,
+  "tonDeadline": 1785269968,
+  "ton": {
+    "giver": "0QD0IrHPzSMPzDPaG4qeYpwI4fyuxhM_75qvqM5lhLk1aMx8",
+    "taker": "0QDiQf1CFyDV3n59JM69ZW5aigZJSsp91q07N-MRas7QB2vj"
+  },
+  "frcTxid": "203b12e863efe9b90f9a93539e1bc8803016a5a0690471920542df55946bd06d",
+  "frcRefheight": 3980,
+  "frcClaimPub": "031af7d6a23d4de66c437c5b34750a20a182a8f0321bff768210e7d412505ccfe4",
+  "frcRefundPub": "0244d5e7f0fcbaa0e627fd5c3fb699c03e559de1a34133745c76bc9ea0e0b21de2",
+  "role": "responder",
+  "state": "refunded",
+  "frc": {
+    "claimPub": "031af7d6a23d4de66c437c5b34750a20a182a8f0321bff768210e7d412505ccfe4",
+    "refundPub": "0244d5e7f0fcbaa0e627fd5c3fb699c03e559de1a34133745c76bc9ea0e0b21de2"
+  },
+  "secret": null,
+  "tonAddress": "EQCK-5Y-JeNv22gUQCfChfPRRaeTmLtHnsyYJ45h9yL1xiDB"
+}

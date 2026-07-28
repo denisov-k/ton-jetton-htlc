@@ -21,13 +21,15 @@ export function frcNode({ bin = '/root/fcbuild-31/bin/freicoin-cli', args = [] }
   return {
     cli, json,
     tip: () => json('getblockcount'),
-    // every unspent output of `address`, with the nominal value the signature must commit to
+    // Every unspent output of `address`. Two fields matter and they are easy to confuse:
+    // `value` is the nominal at the coin's own refheight — that is what a signature commits to —
+    // while `amount` is the same coin discounted to the current tip. And `refheight` is the
+    // transaction's lock height, which for anything but a coinbase is not the block it landed in.
     coins(address) {
       const scan = json('scantxoutset', 'start', JSON.stringify([`addr(${address})`]));
       return scan.unspents.map(u => ({
-        txid: u.txid, vout: u.vout, height: u.height,
-        // scantxoutset reports value already discounted to the tip; the nominal lives in the UTXO set
-        nominal: BigInt(Math.round(json('gettxout', u.txid, String(u.vout)).value * 1e8)),
+        txid: u.txid, vout: u.vout, height: u.height, refheight: u.refheight, coinbase: u.coinbase,
+        nominal: BigInt(Math.round(u.value * 1e8)),
       }));
     },
     send: raw => cli('sendrawtransaction', raw),
@@ -50,8 +52,8 @@ export function frcFund({ node, key, lock, amount, fee = 50000n, maturity = 100,
   const mySpk = frcWpkSpk(pub);
   const h = node.tip();
   const coin = node.coins(frcAddress(pub, net))
-    .filter(c => h - c.height >= maturity)
-    .map(c => ({ ...c, pv: assetPresentValue(c.nominal, h - c.height, HOST) }))
+    .filter(c => !c.coinbase || h - c.height >= maturity)      // maturity is a coinbase rule only
+    .map(c => ({ ...c, pv: assetPresentValue(c.nominal, h - c.refheight, HOST) }))
     .filter(c => c.pv > amount + fee)
     .sort((a, b) => a.height - b.height)[0];
   if (!coin) throw new Error('no mature coin large enough');
@@ -63,7 +65,7 @@ export function frcFund({ node, key, lock, amount, fee = 50000n, maturity = 100,
            { value: coin.pv - amount - fee, scriptPubKey: mySpk }],
   };
   const script = '21' + pub + 'ac';
-  const sh = segwitV0Sighash(tx, 0, script, coin.nominal, coin.height, SIGHASH_ALL);
+  const sh = segwitV0Sighash(tx, 0, script, coin.nominal, coin.refheight, SIGHASH_ALL);
   tx.vin[0].witness = [signEcdsa(key, sh) + '01', '00' + script, ''];
   const raw = serializeTx(tx);
   return { rawtx: raw, txid: node.send(raw), vout: 0, refheight: h, value: amount };

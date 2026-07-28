@@ -134,6 +134,24 @@ SWAP_CONFIG=... node driver/swap.mjs status  --id <swap id>
 A full two-party run has been done this way: 5 FRC against 3 000 jettons, Freicoin regtest against
 TON testnet, two separate keys and two separate wallets, every step verified before it moved.
 
+### Running unattended
+
+Once both locks are up, a missed deadline is a loss, not an inconvenience: if the responder never
+collects, the initiator refunds and the jettons are already gone. `driver/watch.mjs` walks every
+open swap in the journal on a timer, takes the next step for each, and refunds when a deadline
+arrives with nothing to show for it. It is safe to restart — everything it needs is in the journal
+and on the two chains.
+
+```
+SWAP_CONFIG=driver/config.json node driver/watch.mjs [--once]
+```
+
+`deploy/fw-swap-watch@.service` runs it as a systemd unit, one instance per config:
+`systemctl enable --now fw-swap-watch@main`.
+
+Both refund paths have been exercised against live chains, not only in theory: coins returned when
+nobody accepted the offer, and jettons returned when nobody took them.
+
 ## What is missing
 
 - **Somewhere to meet.** The offer travels by hand. Two people who want to swap still have to find

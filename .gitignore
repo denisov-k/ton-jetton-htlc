@@ -12,3 +12,4 @@ frc-main-state.json
 driver/config.json
 driver/swaps/
 driver/config.*.json
+driver/watch-*.log

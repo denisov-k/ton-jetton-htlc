@@ -1,0 +1,17 @@
+[Unit]
+Description=Freimarkets cross-chain swap watcher (%i) — finishes open swaps and refunds on deadline
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/free-money/ton-jetton-htlc
+Environment=SWAP_CONFIG=/root/free-money/ton-jetton-htlc/driver/config.%i.json
+ExecStart=/usr/bin/node driver/watch.mjs
+Restart=always
+RestartSec=10
+StandardOutput=append:/root/free-money/ton-jetton-htlc/driver/watch-%i.log
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target

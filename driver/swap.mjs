@@ -15,19 +15,19 @@ import { frcNode, frcLock, frcFund, frcClaim, frcRefund, frcAddress, frcWpkSpk, 
 import { tonClient, tonWallet, tonLock, tonDeploy, tonFund, tonClaim, tonRefund, tonState,
          tonRevealedPreimage, jetton, Address, Cell, toNano } from './ton-leg.mjs';
 
-const CFG = JSON.parse(readFileSync(process.env.SWAP_CONFIG || 'driver/config.json', 'utf8'));
+export const CFG = JSON.parse(readFileSync(process.env.SWAP_CONFIG || 'driver/config.json', 'utf8'));
 const DIR = CFG.journalDir || 'driver/swaps';
 const sha256 = b => createHash('sha256').update(b).digest('hex');
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
-const load = id => JSON.parse(readFileSync(`${DIR}/${id}.json`, 'utf8'));
-const store = s => { mkdirSync(DIR, { recursive: true }); writeFileSync(`${DIR}/${s.id}.json`, JSON.stringify(s, null, 2)); return s; };
+export const load = id => JSON.parse(readFileSync(`${DIR}/${id}.json`, 'utf8'));
+export const store = s => { mkdirSync(DIR, { recursive: true }); writeFileSync(`${DIR}/${s.id}.json`, JSON.stringify(s, null, 2)); return s; };
 
-const node = () => frcNode({ bin: CFG.frc.cli, args: CFG.frc.args });
+export const node = () => frcNode({ bin: CFG.frc.cli, args: CFG.frc.args });
 const myFrcKey = () => CFG.frc.key;
 const myFrcPub = () => pubkeyCompressed(CFG.frc.key);
 
-async function ton() {
+export async function ton() {
   const client = await tonClient(CFG.ton);
   const wallet = await tonWallet(client, CFG.ton.mnemonicFile);
   const j = await jetton(client, Address.parse(CFG.ton.jettonMaster));
@@ -36,17 +36,17 @@ async function ton() {
 }
 
 // the contract both sides expect: same code, same lock, same parties — computed, never trusted
-const lockFor = (s, code, j) => tonLock({
+export const lockFor = (s, code, j) => tonLock({
   codeCell: code, paymentHash: s.hash, deadline: s.tonDeadline,
   master: Address.parse(CFG.ton.jettonMaster), walletCode: j.walletCode, governed: CFG.ton.governed,
   sender: Address.parse(s.ton.giver), recipient: Address.parse(s.ton.taker),
 });
 
-const frcLockOf = s => frcLock({ paymentHash: s.hash, claimPub: s.frc.claimPub,
+export const frcLockOf = s => frcLock({ paymentHash: s.hash, claimPub: s.frc.claimPub,
   refundPub: s.frc.refundPub, cltv: s.frcCltv, net: CFG.frc.net || 'main' });
 
 // ---- initiator: invent the secret, lock the coins, publish the offer -------------------------
-async function offer({ frcAmount, jettonAmount, tonTaker, tonGiver }) {
+export async function offer({ frcAmount, jettonAmount, tonTaker, tonGiver }) {
   const { client, code, j } = await ton();
   const n = node();
   const secret = randomBytes(32).toString('hex');
@@ -79,7 +79,7 @@ async function offer({ frcAmount, jettonAmount, tonTaker, tonGiver }) {
 }
 
 // ---- responder: check their lock, then lock the jettons --------------------------------------
-async function accept(offerJson) {
+export async function accept(offerJson) {
   const o = JSON.parse(readFileSync(offerJson, 'utf8'));
   const n = node();
   const s = { ...o, role: 'responder', state: 'checking',
@@ -119,7 +119,7 @@ async function accept(offerJson) {
 }
 
 // ---- initiator: check their lock, take the jettons, revealing the secret ----------------------
-async function take(id) {
+export async function take(id) {
   const s = load(id);
   const { client, wallet, j, code } = await ton();
   const tl = lockFor(s, code, j);
@@ -140,7 +140,7 @@ async function take(id) {
 }
 
 // ---- responder: read the secret off TON and take the coins -------------------------------------
-async function collect(id, { poll = 15000, tries = 240 } = {}) {
+export async function collect(id, { poll = 15000, tries = 240 } = {}) {
   const s = load(id);
   const { client, j, code } = await ton();
   const tl = lockFor(s, code, j);
@@ -164,7 +164,7 @@ async function collect(id, { poll = 15000, tries = 240 } = {}) {
 }
 
 // ---- either side: take your own money back once your deadline has passed ------------------------
-async function back(id) {
+export async function back(id) {
   const s = load(id);
   if (s.role === 'initiator') {
     const n = node();
@@ -183,7 +183,7 @@ async function back(id) {
   s.state = 'refunded'; store(s);
 }
 
-async function status(id) {
+export async function status(id) {
   const s = load(id);
   const { client, j, code } = await ton();
   const st = await tonState(client, lockFor(s, code, j));
@@ -194,9 +194,11 @@ async function status(id) {
     ton: { ...st, amount: st.amount?.toString(), secondsLeft: s.tonDeadline - Math.floor(Date.now() / 1000) } }, null, 2));
 }
 
-const [cmd, ...rest] = process.argv.slice(2);
+// the CLI only runs when this file is what was launched
+const entry = process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop());
+const [cmd, ...rest] = entry ? process.argv.slice(2) : [];
 const arg = (k, d) => { const i = rest.indexOf('--' + k); return i < 0 ? d : rest[i + 1]; };
-switch (cmd) {
+if (entry) switch (cmd) {
   case 'offer':   await offer({ frcAmount: BigInt(arg('frc')), jettonAmount: BigInt(arg('jettons')),
                                 tonTaker: arg('to'), tonGiver: arg('from') }); break;
   case 'accept':  await accept(arg('file')); break;
