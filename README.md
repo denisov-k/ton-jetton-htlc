@@ -152,6 +152,22 @@ SWAP_CONFIG=driver/config.json node driver/watch.mjs [--once]
 Both refund paths have been exercised against live chains, not only in theory: coins returned when
 nobody accepted the offer, and jettons returned when nobody took them.
 
+### The counterparty's page
+
+Locking jettons by hand from a wallet app is a trap: the wallet sets a token-sized
+`forward_ton_amount`, the deposit notice never fires, and the money sits in limbo until rescue.
+`web/lock.html` exists so the counterparty never has to know that. It takes the swap's plain
+fields in the URL, recomputes the contract address in the browser — from the code cell baked in
+at build time, so only this code can be deployed — shows every number it is about to commit to,
+and hands the two prepared transactions (deploy + transfer) to the user's own wallet over
+TON Connect. Keys stay in the wallet.
+
+The page refuses to proceed if the connected wallet is not the one the refund path names: signing
+from any other wallet would hand the timeout exit to a stranger.
+
+`node driver/swap.mjs invite --id <swap id>` prints the link. `npm run page` rebuilds the bundle.
+A live copy sits at https://freicoin.ru/swap/lock.html.
+
 ## What is missing
 
 - **Somewhere to meet.** The offer travels by hand. Two people who want to swap still have to find

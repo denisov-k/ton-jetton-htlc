@@ -13,3 +13,5 @@ driver/config.json
 driver/swaps/
 driver/config.*.json
 driver/watch-*.log
+web/dist/
+web/src/htlc-code.mjs

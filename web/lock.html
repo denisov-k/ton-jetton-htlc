@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Запереть токены под сделку</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; max-width: 34rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+  h1 { font-size: 1.3rem; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: .35rem .8rem; }
+  dt { color: color-mix(in srgb, currentColor 60%, transparent); }
+  dd { margin: 0; word-break: break-all; font-variant-numeric: tabular-nums; }
+  code, dd.mono { font-family: ui-monospace, monospace; font-size: .85em; }
+  button#lock { font-size: 1.05rem; padding: .6rem 1.4rem; margin-top: 1rem; cursor: pointer; }
+  #status { margin-top: 1rem; white-space: pre-wrap; word-break: break-all; }
+  .note { font-size: .85rem; color: color-mix(in srgb, currentColor 65%, transparent); margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<h1>Запереть токены под сделку</h1>
+<p>Эта страница собирает две транзакции — развернуть контракт-замок и положить в него токены, —
+а подписывает их твой собственный кошелёк. Ключи никуда не передаются.</p>
+<dl>
+  <dt>Сумма</dt><dd id="amount">…</dd>
+  <dt>Срок возврата</dt><dd id="deadline">…</dd>
+  <dt>Возврат на</dt><dd id="refund" class="mono">…</dd>
+  <dt>Замок (SHA-256)</dt><dd id="hash" class="mono">…</dd>
+  <dt>Контракт</dt><dd id="contract" class="mono">…</dd>
+</dl>
+<div id="connect"></div>
+<button id="lock">Запереть</button>
+<p id="status"></p>
+<p><a id="viewer" hidden target="_blank" rel="noopener">посмотреть контракт в tonviewer</a></p>
+<p class="note">Если до срока никто не заберёт токены по секрету, они возвращаются на кошелёк,
+с которого были заперты, — командой возврата в этом же контракте. Код контракта вшит в страницу
+и опубликован: github.com/denisov-k/ton-jetton-htlc</p>
+<script src="lock.js"></script>
+</body>
+</html>

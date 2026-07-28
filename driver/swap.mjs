@@ -183,6 +183,18 @@ export async function back(id) {
   s.state = 'refunded'; store(s);
 }
 
+// the link the counterparty opens: every field is plain and shown on the page before signing
+export async function invite(id, base = 'https://freicoin.ru/swap/lock.html') {
+  const s = load(id);
+  const q = new URLSearchParams({
+    hash: s.hash, deadline: String(s.tonDeadline), master: CFG.ton.jettonMaster,
+    governed: CFG.ton.governed ? '1' : '0', giver: s.ton.giver, taker: s.ton.taker,
+    jettons: s.jettonAmount, decimals: String(CFG.ton.decimals ?? 9),
+    symbol: CFG.ton.symbol ?? '', chain: CFG.ton.chain ?? 'mainnet',
+  });
+  console.log(`${base}?${q}`);
+}
+
 export async function status(id) {
   const s = load(id);
   const { client, j, code } = await ton();
@@ -206,12 +218,14 @@ if (entry) switch (cmd) {
   case 'collect': await collect(arg('id')); break;
   case 'refund':  await back(arg('id')); break;
   case 'status':  await status(arg('id')); break;
+  case 'invite':  await invite(arg('id'), arg('base', undefined)); break;
   default:
     console.log(`usage:
   offer   --frc <kria> --jettons <units> --from <their TON address> --to <our TON address>
   accept  --file offer.json
   take    --id <swap id>
   collect --id <swap id>
+  invite  --id <swap id> [--base <page url>]
   refund  --id <swap id>
   status  --id <swap id>`);
 }
