@@ -1,0 +1,13 @@
+{
+  "id": "c8595ed2efa907d0",
+  "hash": "c8595ed2efa907d06d4c5fdfd823379714b2978c80c306de9f49ce07c21da541",
+  "state": "open",
+  "createdAt": 1785278920395,
+  "jettons": "1200",
+  "frcAmount": "120000000",
+  "claimPub": "02a3060c3a1090717e25b967f33b34e9909050f1cdddc72493129f3aaa7f8308e5",
+  "frcPayout": "fcrt1q2xaqeqdkkrzpj2cr6gnfac7ehwk7r98snydrxu",
+  "tonGiver": "0QDiQf1CFyDV3n59JM69ZW5aigZJSsp91q07N-MRas7QB2vj",
+  "tonTaker": "EQD0IrHPzSMPzDPaG4qeYpwI4fyuxhM_75qvqM5lhLk1aCoz",
+  "tonDeadline": 1785282520
+}

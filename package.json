@@ -8,7 +8,7 @@
     "deps": "bash scripts/fetch-deps.sh",
     "build": "node compile-jetton.mjs && node compile.mjs",
     "test": "node test/lock.mjs && node test/jetton.mjs && node test/pok-layout.mjs",
-    "page": "node web/src/gen-code.mjs && esbuild web/src/lock.mjs --bundle --minify --format=iife --outfile=web/dist/lock.js"
+    "page": "node web/src/gen-code.mjs && esbuild web/src/lock.mjs --bundle --minify --format=iife --outfile=web/dist/lock.js && esbuild web/src/swap-page.mjs --bundle --minify --format=iife --outfile=web/dist/swap.js"
   },
   "dependencies": {
     "@orbs-network/ton-access": "^2.3.3",

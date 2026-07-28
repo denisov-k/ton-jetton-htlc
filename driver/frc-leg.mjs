@@ -27,10 +27,15 @@ export function frcNode({ bin = '/root/fcbuild-31/bin/freicoin-cli', args = [] }
     // transaction's lock height, which for anything but a coinbase is not the block it landed in.
     coins(address) {
       const scan = json('scantxoutset', 'start', JSON.stringify([`addr(${address})`]));
-      return scan.unspents.map(u => ({
-        txid: u.txid, vout: u.vout, height: u.height, refheight: u.refheight, coinbase: u.coinbase,
-        nominal: BigInt(Math.round(u.value * 1e8)),
-      }));
+      return scan.unspents
+        .map(u => ({
+          txid: u.txid, vout: u.vout, height: u.height, refheight: u.refheight, coinbase: u.coinbase,
+          nominal: BigInt(Math.round(u.value * 1e8)),
+        }))
+        // scantxoutset only sees confirmed state; a coin already spent by a transaction waiting in
+        // the mempool is still listed there, and spending it again is how two swaps fight over one
+        // coin. gettxout with the mempool view is the tie-breaker.
+        .filter(u => { try { return !!cli('gettxout', u.txid, String(u.vout)); } catch { return false; } });
     },
     send: raw => cli('sendrawtransaction', raw),
     outAt: (txid, n) => { try { return json('gettxout', txid, String(n)); } catch { return null; } },

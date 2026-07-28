@@ -1,0 +1,17 @@
+[Unit]
+Description=Freimarkets TON swap daemon — the house side of POK-for-FRC swaps (:5188)
+After=network-online.target freicoind-filter.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/free-money/ton-jetton-htlc
+Environment=BOTD_CONFIG=/root/free-money/ton-jetton-htlc/driver/botd.main.json
+ExecStart=/usr/bin/node driver/botd.mjs
+Restart=always
+RestartSec=15
+StandardOutput=append:/root/fw-tonswap/botd.log
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target

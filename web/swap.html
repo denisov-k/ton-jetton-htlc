@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Обменять токены на FRC</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; max-width: 34rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+  h1 { font-size: 1.3rem; }
+  ol.steps { display: flex; gap: .6rem; list-style: none; padding: 0; font-size: .8rem; }
+  ol.steps li { opacity: .45; } ol.steps li.on { opacity: 1; font-weight: 600; }
+  label { display: block; margin-top: .8rem; }
+  input { width: 100%; box-sizing: border-box; font-size: 1rem; padding: .45rem .6rem; margin-top: .25rem; }
+  #frcOut { margin-top: .3rem; font-variant-numeric: tabular-nums; }
+  button#go { font-size: 1.05rem; padding: .6rem 1.4rem; margin-top: 1rem; cursor: pointer; }
+  #status { margin-top: 1rem; white-space: pre-wrap; word-break: break-all; }
+  .note { font-size: .85rem; opacity: .7; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<h1>Обменять токены на FRC</h1>
+<ol class="steps"><li id="s1" class="on">1 · сумма</li><li id="s2">2 · запереть</li><li id="s3">3 · обмен</li><li id="s4">4 · готово</li></ol>
+<p id="rate">…</p>
+<div id="connect"></div>
+<label>Сколько токенов отдаёшь
+  <input id="jettons" type="number" min="0" step="any" inputmode="decimal">
+</label>
+<div id="frcOut"></div>
+<label>FRC-адрес, куда получить (из кошелька на <a href="https://freicoin.ru" target="_blank" rel="noopener">freicoin.ru</a>)
+  <input id="payout" type="text" autocomplete="off" spellcheck="false" placeholder="fc1q…">
+</label>
+<button id="go">Обменять</button>
+<button id="refund" hidden>Вернуть токены (срок вышел)</button>
+<p id="status"></p>
+<p><a id="expl" hidden target="_blank" rel="noopener">посмотреть выплату в обозревателе</a></p>
+<p class="note">Секрет сделки и ключ получения рождаются в этом браузере и не покидают его.
+Токены запирает твой собственный кошелёк; если обмен не состоится, они вернутся тебе по таймауту.
+Код открыт: github.com/denisov-k/ton-jetton-htlc</p>
+<script src="swap.js"></script>
+</body>
+</html>

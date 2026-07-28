@@ -1,0 +1,34 @@
+{
+  "port": 5187,
+  "journalDir": "driver/botd-swaps-test",
+  "rateFrcPerJetton": 100000,
+  "minJettons": 100,
+  "maxJettons": 100000,
+  "tonSeconds": 3600,
+  "minSeconds": 600,
+  "frcBlocks": 6,
+  "tickSeconds": 10,
+  "frc": {
+    "cli": "/root/fcbuild-31/bin/freicoin-cli",
+    "args": [
+      "-regtest",
+      "-datadir=/root/fw-bdev",
+      "-rpcport=19560"
+    ],
+    "net": "regtest",
+    "keyFile": "/root/fw-tonswap/key.txt",
+    "fee": 50000,
+    "maturity": 1
+  },
+  "ton": {
+    "endpoint": "https://testnet.toncenter.com/api/v2/jsonRPC",
+    "mnemonicFile": "testnet-wallet.json",
+    "jettonMaster": "kQCiLz4t3680hW0BZm6r4vcF_6fu4Mh9fYmQLkmId5Z_d0JT",
+    "governed": false,
+    "codeFile": "htlc.boc.b64",
+    "symbol": "TEST",
+    "decimals": 9,
+    "chain": "testnet",
+    "claimGas": "0.06"
+  }
+}

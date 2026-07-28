@@ -1,0 +1,32 @@
+{
+  "port": 5188,
+  "journalDir": "/root/fw-tonswap/swaps",
+  "rateFrcPerJetton": 0.0018,
+  "minJettons": 500000000000,
+  "maxJettons": 20000000000000,
+  "tonSeconds": 86400,
+  "minSeconds": 14400,
+  "frcBlocks": 12,
+  "tickSeconds": 30,
+  "frc": {
+    "cli": "/root/fcbuild-31/bin/freicoin-cli",
+    "args": [
+      "-datadir=/root/fw-mainnet-filter"
+    ],
+    "net": "main",
+    "keyFile": "/root/fw-tonswap/key.txt",
+    "fee": 50000,
+    "maturity": 100
+  },
+  "ton": {
+    "endpoint": "https://toncenter.com/api/v2/jsonRPC",
+    "mnemonicFile": "/root/free-money/ton-jetton-htlc/testnet-wallet.json",
+    "jettonMaster": "EQBp6FAkDdHD_lLKUBI-J-Et5zQeyJlixc6f3iKHBie85Fd-",
+    "governed": true,
+    "codeFile": "/root/free-money/ton-jetton-htlc/htlc.boc.b64",
+    "symbol": "POK",
+    "decimals": 9,
+    "chain": "mainnet",
+    "claimGas": "0.1"
+  }
+}

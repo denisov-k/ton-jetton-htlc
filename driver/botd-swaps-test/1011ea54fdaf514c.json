@@ -1,0 +1,26 @@
+{
+  "id": "1011ea54fdaf514c",
+  "hash": "1011ea54fdaf514cca0a81ed6f891bc261aa8dcbfc5693017f1cfd8fcd8c2558",
+  "state": "frc-refunded",
+  "createdAt": 1785278860849,
+  "jettons": "1200",
+  "frcAmount": "120000000",
+  "claimPub": "025a446f9ecda477ae3490546765c51f05ae4d120e27d482aecf5094ddad6a308c",
+  "frcPayout": "fcrt1qeeunnppgyndfn2874q75m0qkftk5p44ggjmgdk",
+  "tonGiver": "0QDiQf1CFyDV3n59JM69ZW5aigZJSsp91q07N-MRas7QB2vj",
+  "tonTaker": "EQD0IrHPzSMPzDPaG4qeYpwI4fyuxhM_75qvqM5lhLk1aCoz",
+  "tonDeadline": 1785282460,
+  "tonAddress": "EQCKmE7qZnBg91aq8oIbeVVJsDEO82rSkzU3PpFvCNq-Ztzp",
+  "frcRawTx": "02000000ff01012105797682a1adb897b373b402021230860cb45044d8194092e0ba6cc85023a40000000000fdffffff02000e2707000000002200200865a66a8443192a739a456c95dae00956db1fbdeee11e8c28eba40276777e0ab012e44c02000000160014f5455de7860028f5407e9d8efd177c7eedd2c97d03483045022100c7aa9f897c2ce91ac5771e83f5278266d664f3a8f7fa955cce48a832f59b170802202efd1b7374da490f7b246e3fc942e3a717a0e2fc23129b6ee105a1381792254501240021030467e66b96b1a70a6415af45fbff40c8f37b10e3cd3e078ed08dedba7d0fe104ac00000000008e0f0000",
+  "frcLockInfo": {
+    "txid": "287ebd565c83e8c182d2a99cb6d37e89f7b88e28dc94f18d4e9f10b0ec0448f7",
+    "vout": 0,
+    "value": "120000000",
+    "refheight": 3982,
+    "cltv": 3988,
+    "refundPub": "030467e66b96b1a70a6415af45fbff40c8f37b10e3cd3e078ed08dedba7d0fe104",
+    "address": "fcrt1qppj6v65ygvvj5uu6g4kftkhqp9tdk8aaams3arpgawjqyanh0c9qhqvth7",
+    "leaf": "63a8201011ea54fdaf514cca0a81ed6f891bc261aa8dcbfc5693017f1cfd8fcd8c25588821025a446f9ecda477ae3490546765c51f05ae4d120e27d482aecf5094ddad6a308cac676302940fb121030467e66b96b1a70a6415af45fbff40c8f37b10e3cd3e078ed08dedba7d0fe104ac6721025a446f9ecda477ae3490546765c51f05ae4d120e27d482aecf5094ddad6a308cad21030467e66b96b1a70a6415af45fbff40c8f37b10e3cd3e078ed08dedba7d0fe104ac6868"
+  },
+  "frcRefunded": true
+}

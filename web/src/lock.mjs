@@ -16,17 +16,21 @@ const API = CHAIN === 'testnet' ? 'https://testnet.toncenter.com/api/v2' : 'http
 const $ = id => document.getElementById(id);
 const show = (id, t) => { $(id).textContent = t; };
 
-const params = {
-  hash: need('hash').toLowerCase(),
-  deadline: Number(need('deadline')),
-  master: Address.parse(need('master')),
-  governed: P.get('governed') === '1',
-  giver: Address.parse(need('giver')),
-  taker: Address.parse(need('taker')),
-  jettons: BigInt(need('jettons')),
-  decimals: Number(P.get('decimals') || 9),
-  symbol: P.get('symbol') || 'токенов',
-};
+// parsed inside main() so a bad or missing link fails in words, not in silence
+let params;
+function parseParams() {
+  return {
+    hash: need('hash').toLowerCase(),
+    deadline: Number(need('deadline')),
+    master: Address.parse(need('master')),
+    governed: P.get('governed') === '1',
+    giver: Address.parse(need('giver')),
+    taker: Address.parse(need('taker')),
+    jettons: BigInt(need('jettons')),
+    decimals: Number(P.get('decimals') || 9),
+    symbol: P.get('symbol') || 'токенов',
+  };
+}
 
 // ---- the same arithmetic the contract runs -----------------------------------------------------
 const walletData = (owner, master, code) => params.governed
@@ -61,6 +65,12 @@ const fmt = v => (Number(v) / 10 ** params.decimals).toLocaleString('ru-RU');
 const OP_TRANSFER = 0xf8a7ea5;
 
 async function main() {
+  if (!P.get('hash')) {
+    $('lock').hidden = true;
+    show('status', 'Эта страница открывается по ссылке-приглашению к конкретной сделке — в самой ссылке лежат все её параметры. Без них запирать нечего. Ссылку даёт вторая сторона обмена.');
+    return;
+  }
+  params = parseParams();
   show('amount', `${fmt(params.jettons)} ${params.symbol}`);
   show('deadline', new Date(params.deadline * 1000).toLocaleString('ru-RU') +
     ` (через ${Math.max(0, Math.round((params.deadline - Date.now() / 1000) / 60))} мин)`);
