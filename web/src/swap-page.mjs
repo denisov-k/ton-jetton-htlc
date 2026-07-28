@@ -146,6 +146,11 @@ async function claimFrc(st) {
   const payoutSpk = '00' + (dec.programHex.length / 2).toString(16).padStart(2, '0') + dec.programHex;
   const claim = htlcClaim({ prevTxid: realTxid, vout: 0, value: BigInt(out.value), refheight: st.frcLock.refheight,
     leafHex: leaf, preimage: deal.secret, claimKey: deal.claimKey, toSpk: payoutSpk, fee: 50000n });
+  // The daemon is also the broadcast path, and that is the one residual trust left in this flow:
+  // a server that swallowed the claim would be holding the preimage. So the raw transaction is
+  // kept on screen — it can be broadcast through any Freicoin node, and the secret it reveals is
+  // the same one the claim was already going to reveal.
+  deal.claimRawtx = claim.rawtx; save(deal);
   const r = await api('claim', { id: deal.id, rawtx: claim.rawtx });
   deal.phase = 'claimed'; deal.frcClaimTxid = r.txid; save(deal);
   finish({ frcClaimTxid: r.txid });
@@ -154,7 +159,8 @@ async function claimFrc(st) {
 function finish(st) {
   step(4);
   const t = st.frcClaimTxid ?? deal.frcClaimTxid;
-  show('status', `Готово. FRC отправлены на ${deal.payout}` + (t ? `\nтранзакция: ${t}` : ''));
+  show('status', `Готово. FRC отправлены на ${deal.payout}` + (t ? `\nтранзакция: ${t}` : '')
+    + (deal.claimRawtx ? `\n\nЕсли выплата не видна в обозревателе через 10 минут — вот сырая транзакция, её можно отправить через любой узел Freicoin:\n${deal.claimRawtx}` : ''));
   const a = $('expl'); if (a && t) { a.href = 'https://freicoin.info/tx/' + t; a.hidden = false; }
   localStorage.removeItem(S_KEY);
 }
