@@ -1,0 +1,2 @@
+;; the jetton sources predate the stdlib rename
+int equal_slices (slice a, slice b) asm "SDEQ";
