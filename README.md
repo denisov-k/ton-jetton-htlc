@@ -95,12 +95,51 @@ first, and only then locked the coins on Freicoin.
 `scripts/testnet.mjs` and `scripts/mainnet.mjs` are those runs. They expect a `testnet-wallet.json`
 holding a mnemonic — a throwaway wallet, never a real one; the file is git-ignored for a reason.
 
+## The driver
+
+`driver/` turns the contract into an actual swap between two people. Each side runs its own
+commands against its own config; nothing is shared but the offer, which is a few lines of JSON.
+
+```
+initiator (gives FRC, wants jettons)      responder (gives jettons, wants FRC)
+------------------------------------      ------------------------------------
+offer    invents the secret, locks FRC →  accept   checks that lock, locks jettons
+take     checks the jetton lock, claims → collect  reads the secret off TON, claims FRC
+         them and so reveals the secret
+refund   after its deadline               refund   after its deadline
+```
+
+Nothing is taken on trust. Before locking jettons the responder checks that the coins really are
+on chain, in the promised amount, under its own claim key, with enough blocks left to collect
+after the secret appears. Before revealing the secret the initiator checks the jetton lock the same
+way — amount, hash, deadline — and that the contract sitting there is *this* code, by comparing the
+code cell hash. A lookalike contract with a back door fails that test.
+
+The deadlines are the one thing that must not be sloppy: the side that reveals the secret works
+against the shorter clock, so the other side still has room to use it. `frcBlocks` and `tonSeconds`
+in the config set them; `minBlocks` and `minSeconds` are the margins each side refuses to go below.
+
+Copy `driver/config.example.json` to `driver/config.json` and fill in the node, the key, the
+mnemonic file and the jetton. Then:
+
+```
+SWAP_CONFIG=driver/config.json node driver/swap.mjs offer --frc 500000000 --jettons 3000 \
+    --from <their TON address> --to <our TON address>
+SWAP_CONFIG=... node driver/swap.mjs accept  --file offer.json
+SWAP_CONFIG=... node driver/swap.mjs take    --id <swap id>
+SWAP_CONFIG=... node driver/swap.mjs collect --id <swap id>
+SWAP_CONFIG=... node driver/swap.mjs status  --id <swap id>
+```
+
+A full two-party run has been done this way: 5 FRC against 3 000 jettons, Freicoin regtest against
+TON testnet, two separate keys and two separate wallets, every step verified before it moved.
+
 ## What is missing
 
-- **A driver.** Both legs are driven by hand here. A real swap needs software that watches both
-  chains, reveals the secret in time, and never lets the shorter window close first.
-- **Timeout policy.** The side that reveals the secret must work against the shorter deadline. The
-  numbers depend on how fast both chains confirm, and they are not chosen here.
+- **Somewhere to meet.** The offer travels by hand. Two people who want to swap still have to find
+  each other and agree a rate; there is no order book here.
+- **Unattended operation.** `collect` polls while you watch it. In earnest it wants to be a service
+  that survives restarts and never sleeps through a deadline.
 - **An audit.** The contract was written from scratch in FunC and has never been reviewed. The live
   runs above deliberately used amounts worth less than a dollar.
 

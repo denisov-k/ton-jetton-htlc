@@ -9,3 +9,6 @@ state*.json
 frc-main-state.json
 # never: this is a live key
 *wallet.json
+driver/config.json
+driver/swaps/
+driver/config.*.json

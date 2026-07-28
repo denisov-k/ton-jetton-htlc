@@ -1,0 +1,27 @@
+{
+  "id": "0d7a1d46b6c8c304",
+  "role": "initiator",
+  "secret": "e4cb26b12ec6843b24d182dc37556a4b70f7618528c9d9f5c15d07aeeb9db202",
+  "hash": "0d7a1d46b6c8c30457b8f5ee7e36a7a7c46d68eb8542d5290def42cd92271c27",
+  "frcAmount": "500000000",
+  "jettonAmount": "3000",
+  "frcCltv": 3995,
+  "tonDeadline": 1785275323,
+  "frc": {
+    "claimPub": "031af7d6a23d4de66c437c5b34750a20a182a8f0321bff768210e7d412505ccfe4",
+    "refundPub": "0244d5e7f0fcbaa0e627fd5c3fb699c03e559de1a34133745c76bc9ea0e0b21de2",
+    "payout": "001461dfc4836fad600dea4be4a1426a90f5a7b75f3f"
+  },
+  "ton": {
+    "giver": "0QD0IrHPzSMPzDPaG4qeYpwI4fyuxhM_75qvqM5lhLk1aMx8",
+    "taker": "0QDiQf1CFyDV3n59JM69ZW5aigZJSsp91q07N-MRas7QB2vj"
+  },
+  "state": "jettons-taken",
+  "frcFunding": {
+    "txid": "7449f1faaaf35a1ccd504ae9bc9bd3ca60fe2893f71f06bb8b75b4cd1ceebd82",
+    "vout": 0,
+    "refheight": 3971,
+    "value": "500000000"
+  },
+  "frcAddress": "fcrt1qjj3y5kel02c3dkkx8rp469e69w2slj8c3ng48l3jwfdwha0e5lls0z4dxc"
+}
