@@ -73,7 +73,7 @@ async function start() {
     show('frcOut', raw > 0n ? `≈ ${fmtFrc(Number(raw) * quote.rate)} FRC` : '');
   };
   $('go').onclick = begin;
-  if (deal) resume();
+  if (deal) resume(); else lockForm(false, 'Обменять');
 }
 
 async function begin() {
@@ -97,6 +97,7 @@ async function begin() {
 // ---- step 2: lock the jettons with the visitor's own wallet ------------------------------------
 async function lockJettons() {
   step(2);
+  lockForm(true, 'запираем токены…');
   show('status', 'считаем контракт…');
   const walletCode = await jettonFacts();
   const { init } = tonLockAddress(walletCode);
@@ -123,6 +124,7 @@ async function lockJettons() {
 // ---- step 3: wait for the daemon's FRC lock, verify it, claim ----------------------------------
 async function poll() {
   step(3);
+  lockForm(true, 'сделка идёт…');
   show('status', 'токены заперты. Ждём, пока вторая сторона запрёт FRC — обычно это минуты…');
   for (;;) {
     let st;
@@ -189,5 +191,9 @@ function resume() {
   if (Date.now() / 1000 > deal.tonDeadline) { $('refund').hidden = false; $('refund').onclick = refundJettons; }
 }
 
+function lockForm(on, label) {
+  for (const id of ['jettons', 'payout', 'go']) { const e = $(id); if (e) e.disabled = on; }
+  if (label) $('go').textContent = label;
+}
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 start().catch(e => show('status', 'ошибка: ' + (e?.message || e)));
