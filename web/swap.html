@@ -37,8 +37,7 @@
   .dir button { flex: 1; padding: .5rem; font-size: .9rem; cursor: pointer; color: var(--sub);
     background: var(--field); border: 1px solid var(--line); border-radius: .6rem; }
   .dir button.on { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 600; }
-  .rate { font-size: .9rem; color: var(--sub); margin: 0 0 1rem; font-variant-numeric: tabular-nums; }
-  .rate b { color: var(--ink); }
+  .rate { font-size: .82rem; color: var(--sub); margin: .5rem 0 0; font-variant-numeric: tabular-nums; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: .9rem; padding: 1.1rem; }
   .wallets { display: flex; flex-direction: row; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
   .wallets > * { margin: 0; }
@@ -97,8 +96,6 @@
   <ol class="steps">
     <li id="s1" class="on">сумма</li><li id="s2">запереть</li><li id="s3">обмен</li><li id="s4">готово</li>
   </ol>
-  <p class="rate" id="rate">…</p>
-
   <div class="card" id="form">
     <div class="wallets">
       <div id="connect"></div>
@@ -114,6 +111,7 @@
       <input id="jettons" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
     </label>
     <div class="out" id="frcOut"></div>
+    <p class="rate" id="rate">…</p>
     <p class="sub" id="frcWho" hidden style="font-size:.82rem;color:var(--sub);margin:.5rem 0 0;word-break:break-all"></p>
     <button class="primary" id="go">Обменять</button>
     <button class="ghost" id="refund" hidden>Вернуть токены (срок вышел)</button>
