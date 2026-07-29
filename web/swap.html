@@ -27,6 +27,10 @@
   .steps li { flex: 1; text-align: center; padding: .35rem .2rem; border-radius: .5rem; color: var(--sub);
     background: var(--field); border: 1px solid var(--line); }
   .steps li.on { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .dir { display: flex; gap: .35rem; margin: 0 0 .9rem; }
+  .dir button { flex: 1; padding: .5rem; font-size: .9rem; cursor: pointer; color: var(--sub);
+    background: var(--field); border: 1px solid var(--line); border-radius: .6rem; }
+  .dir button.on { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 600; }
   .rate { font-size: .9rem; color: var(--sub); margin: 0 0 1rem; font-variant-numeric: tabular-nums; }
   .rate b { color: var(--ink); }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: .9rem; padding: 1.1rem; }
@@ -64,6 +68,10 @@
   <ol class="steps">
     <li id="s1" class="on">сумма</li><li id="s2">запереть</li><li id="s3">обмен</li><li id="s4">готово</li>
   </ol>
+  <div class="dir" role="tablist">
+    <button id="dirFwd" class="on" role="tab">POK → FRC</button>
+    <button id="dirBack" role="tab">FRC → POK</button>
+  </div>
   <p class="rate" id="rate">…</p>
 
   <div class="card" id="form">
@@ -72,9 +80,13 @@
       <input id="jettons" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
     </label>
     <div class="out" id="frcOut"></div>
-    <label>FRC-адрес для получения — из кошелька на <a href="https://freicoin.ru" target="_blank" rel="noopener">freicoin.ru</a>
+    <label id="payoutRow">FRC-адрес для получения — из кошелька на <a href="https://freicoin.ru" target="_blank" rel="noopener">freicoin.ru</a>
       <input id="payout" type="text" autocomplete="off" spellcheck="false" placeholder="fc1q…">
     </label>
+    <div id="frcConnectRow" hidden>
+      <button class="ghost" id="frcConnect">Подключить FRC-кошелёк</button>
+      <p class="sub" id="frcWho" style="font-size:.82rem;color:var(--sub);margin:.4rem 0 0"></p>
+    </div>
     <button class="primary" id="go">Обменять</button>
     <button class="ghost" id="refund" hidden>Вернуть токены (срок вышел)</button>
     <p id="status"></p>

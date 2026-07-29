@@ -141,10 +141,15 @@ const api = {
       chain: CFG.ton.chain, tonSender: (await ton()).wallet.address.toString() };
   },
 
+  // Everything a wallet needs to rebuild the lock itself and refuse if it does not match.
+  // The wallet is told the terms, never an address to pay blindly.
   async statusReverse(b) {
     const s = swaps.get(String(b.id ?? '')); if (!s || s.dir !== 'reverse') throw new Error('no such swap');
     return { id: s.id, state: s.state, tonAddress: s.tonAddress ?? null, tonDeadline: s.tonDeadline,
-      jettons: s.jettons, frcAmount: s.frcAmount, frcClaimTxid: s.frcClaimTxid ?? null, tip: node.tip() };
+      jettons: s.jettons, frcAmount: s.frcAmount, frcClaimTxid: s.frcClaimTxid ?? null, tip: node.tip(),
+      hash: s.hash, frcClaimPub: PUB, frcRefundPub: s.frcRefundPub, frcCltv: s.frcCltv,
+      frcAddress: s.frcLockAddress, tonRecipient: s.tonRecipient, symbol: CFG.ton.symbol,
+      decimals: CFG.ton.decimals, net: CFG.frc.net };
   },
 };
 const WRITE = new Set(['offer', 'claim', 'offerReverse']);
