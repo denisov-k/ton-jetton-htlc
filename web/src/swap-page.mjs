@@ -117,14 +117,15 @@ async function start() {
   $('go').onclick = () => (dir === 'fwd' ? begin() : beginReverse()).catch(e => show('status', 'не вышло: ' + e.message));
   $('dirFwd').onclick = () => setDir('fwd');
   $('dirBack').onclick = () => setDir('back');
+  $('frcCopy').onclick = () => { navigator.clipboard?.writeText(frcAcct?.payout || ''); $('frcMenu').hidden = true; };
+  $('frcOff').onclick = () => { frcAcct = null; $('frcMenu').hidden = true; paintFrcPill(); };
+  document.addEventListener('click', e => { if (!$('frcWrap').contains(e.target)) $('frcMenu').hidden = true; });
   $('frcConnect').onclick = async () => {
+    if (frcAcct) { $('frcMenu').hidden = !$('frcMenu').hidden; return; }
     try {
       show('status', 'открываем кошелёк…');
       frcAcct = await askWallet('swapsign?req=connect');
-      $('frcConnect').textContent = frcAcct.payout.slice(0, 8) + '…' + frcAcct.payout.slice(-4);
-      $('frcConnect').classList.add('on');
-      $('frcWho').hidden = false;
-      show('frcWho', 'FRC-кошелёк подключён');
+      paintFrcPill();
       show('status', '');
     } catch (e) { show('status', 'не вышло: ' + e.message); }
   };
@@ -341,11 +342,19 @@ function resume() {
 }
 
 // a resumed deal fixes the direction: show it, but do not let it be switched
+function paintFrcPill() {
+  const b = $('frcConnect');
+  b.innerHTML = frcAcct
+    ? `${frcAcct.payout.slice(0, 8)}…${frcAcct.payout.slice(-4)} <span class="chev">▾</span>`
+    : 'Подключить FRC-кошелёк';
+  $('frcWho').hidden = true;
+}
+
 function setDirLocked() {
   $('dirFwd').classList.toggle('on', dir === 'fwd');
   $('dirBack').classList.toggle('on', dir === 'back');
   $('payoutRow').hidden = dir !== 'fwd';
-  $('frcConnect').hidden = dir === 'fwd';
+  $('frcWrap').hidden = dir === 'fwd';
   $('frcWho').hidden = dir === 'fwd' || !frcAcct;
 }
 
@@ -355,7 +364,7 @@ function setDir(d) {
   $('dirFwd').classList.toggle('on', d === 'fwd');
   $('dirBack').classList.toggle('on', d === 'back');
   $('payoutRow').hidden = d !== 'fwd';
-  $('frcConnect').hidden = d === 'fwd';  // the FRC wallet only signs in the reverse direction
+  $('frcWrap').hidden = d === 'fwd';     // the FRC wallet only signs in the reverse direction
   $('frcWho').hidden = d === 'fwd' || !frcAcct;
   const label = $('jettons').previousSibling;
   $('jettons').parentElement.childNodes[0].textContent = d === 'fwd' ? 'Сколько токенов отдаёшь' : 'Сколько токенов хочешь получить';

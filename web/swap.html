@@ -37,11 +37,20 @@
   .card { background: var(--card); border: 1px solid var(--line); border-radius: .9rem; padding: 1.1rem; }
   .wallets { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
   .wallets > * { margin: 0; }
-  button.pill { border-radius: 2rem; padding: .58rem 1.1rem; font-size: .95rem; font-weight: 500;
-    background: var(--card); color: var(--ink); border: 1px solid var(--line);
-    box-shadow: 0 1px 3px rgba(0,0,0,.07); cursor: pointer; white-space: nowrap; }
+  /* matched to the TON Connect button: white pill, no border, soft shadow, chevron */
+  .pillwrap { position: relative; }
+  button.pill { display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap;
+    border-radius: 2rem; padding: .62rem 1.05rem; font-size: 1rem; font-weight: 600;
+    font-family: inherit; background: var(--card); color: var(--ink); border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,.10); cursor: pointer; }
   button.pill:active { transform: translateY(1px); }
-  button.pill.on { border-color: var(--accent); color: var(--accent-ink); }
+  button.pill .chev { font-size: .7em; opacity: .55; }
+  .pillmenu { position: absolute; z-index: 5; top: calc(100% + .4rem); left: 0; min-width: 12rem;
+    background: var(--card); border-radius: .8rem; box-shadow: 0 6px 24px rgba(0,0,0,.16); padding: .35rem; }
+  .pillmenu button { display: block; width: 100%; text-align: left; padding: .6rem .7rem;
+    font-size: .95rem; font-family: inherit; color: var(--ink); background: none; border: none;
+    border-radius: .5rem; cursor: pointer; }
+  .pillmenu button:hover { background: var(--field); }
   label { display: block; font-size: .85rem; color: var(--sub); margin-top: .9rem; }
   label:first-of-type { margin-top: 0; }
   input { width: 100%; margin-top: .35rem; font-size: 1.05rem; padding: .6rem .7rem;
@@ -84,7 +93,13 @@
   <div class="card" id="form">
     <div class="wallets">
       <div id="connect"></div>
-      <button class="pill" id="frcConnect" hidden>Подключить FRC-кошелёк</button>
+      <span class="pillwrap" id="frcWrap" hidden>
+        <button class="pill" id="frcConnect">Подключить FRC-кошелёк</button>
+        <div class="pillmenu" id="frcMenu" hidden>
+          <button id="frcCopy">Скопировать адрес</button>
+          <button id="frcOff">Отключить</button>
+        </div>
+      </span>
     </div>
     <label>Сколько токенов отдаёшь
       <input id="jettons" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
