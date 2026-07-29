@@ -111,7 +111,10 @@ async function start() {
   show('rate', `1 ${quote.symbol} ≈ ${perToken.toLocaleString('ru-RU', { maximumFractionDigits: 6 })} FRC · лимиты ${fmtJ(quote.minJettons)}–${fmtJ(quote.maxJettons)} ${quote.symbol}`);
   try {
     ui = new TonConnectUI({ manifestUrl: 'https://freicoin.ru/swap/tonconnect-manifest.json', buttonRootId: 'connect',
-      actionsConfiguration: { returnStrategy: 'back', twaReturnUrl: 'https://freicoin.ru/swap/' } });
+      actionsConfiguration: { returnStrategy: 'back' } });
+    // iOS Safari often will not foreground itself from the wallet; when the user comes back by
+    // hand, reflect the connection and clear any "return to Safari" hint.
+    ui.onStatusChange(w => { if (w) show('status', ''); });
   }
   catch (e) { show('status', 'кошелёк не инициализировался: ' + e.message + ' — обнови страницу'); return; }
   $('jettons').oninput = () => {
