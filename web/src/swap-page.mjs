@@ -125,11 +125,14 @@ async function lockJettons() {
 async function poll() {
   step(3);
   lockForm(true, 'сделка идёт…');
-  show('status', 'токены заперты. Ждём, пока вторая сторона запрёт FRC — обычно это минуты…');
+  show('status', 'Токены заперты. Ждём, пока вторая сторона запрёт FRC (это один блок Freicoin — до 20–30 минут)…');
   for (;;) {
     let st;
     try { st = await api('status', { id: deal.id }); } catch { await sleep(7000); continue; }
-    if (st.state === 'frc-locked' && st.frcRawTx) return claimFrc(st);
+    if (st.state === 'frc-locked' && st.frcRawTx) {
+      if ((st.frcConfirmations ?? 0) >= 1) return claimFrc(st);
+      show('status', `FRC заперты в цепи и ждут подтверждения — блок скоро закроется. Забираем автоматически, как только он придёт.`);
+    }
     if (st.state === 'claimed' || st.state === 'done') return finish(st);
     if (st.state === 'expired') return show('status', 'срок вышел, сделка не состоялась. Токены вернутся по таймауту — кнопка возврата появится после срока.');
     await sleep(7000);

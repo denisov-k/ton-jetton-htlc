@@ -93,8 +93,10 @@ const api = {
   async status(b) {
     const s = swaps.get(String(b.id ?? '')); if (!s) throw new Error('no such swap');
     const { state, frcLockInfo, frcClaimTxid, frcRefunded, tonDeadline, jettons, frcAmount } = s;
+    let frcConfirmations = 0;
+    if (frcLockInfo) { const o = node.outAt(frcLockInfo.txid, 0); frcConfirmations = o ? o.confirmations : 0; }
     return { id: s.id, state, frcLock: frcLockInfo ?? null, frcClaimTxid: frcClaimTxid ?? null,
-      frcRefunded: !!frcRefunded, tonDeadline, jettons, frcAmount,
+      frcRefunded: !!frcRefunded, tonDeadline, jettons, frcAmount, frcConfirmations,
       // the raw funding tx lets the page verify our lock byte for byte and derive its txid itself
       frcRawTx: s.frcRawTx ?? null, tip: node.tip() };
   },
