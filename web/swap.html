@@ -41,12 +41,13 @@
   .rate { font-size: .9rem; color: var(--sub); margin: 0 0 1rem; font-variant-numeric: tabular-nums; }
   .rate b { color: var(--ink); }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: .9rem; padding: 1.1rem; }
-  .wallets { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  .wallets { display: flex; flex-direction: column; align-items: flex-start; gap: .55rem; margin-bottom: 1.1rem; }
   .wallets > * { margin: 0; }
+  .wallets .pillwrap, .wallets #connect { width: auto; }
   /* matched to the TON Connect button: white pill, no border, soft shadow, chevron */
   .pillwrap { position: relative; }
-  button.pill { display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap;
-    border-radius: 2rem; padding: .62rem 1.05rem; font-size: 1rem; font-weight: 600;
+  button.pill { display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap;
+    border-radius: 2rem; padding: 0 1.05rem; height: 2.6rem; font-size: 1rem; font-weight: 600;
     font-family: inherit; background: var(--card); color: var(--ink); border: none;
     box-shadow: 0 2px 8px rgba(0,0,0,.10); cursor: pointer; }
   button.pill:active { transform: translateY(1px); }
