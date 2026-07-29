@@ -50,7 +50,9 @@
     box-shadow: 0 2px 8px rgba(0,0,0,.10); cursor: pointer; }
   button.pill:active { transform: translateY(1px); }
   button.pill .chev { font-size: .7em; opacity: .55; }
-  button.pill .pillmark { font-family: Georgia, serif; font-style: italic; font-weight: 700; font-size: 1.05em; color: var(--accent); }
+  button.pill .pillmark { display: inline-flex; align-items: center; justify-content: center;
+    width: 1.15em; height: 1.15em; font-family: Georgia, serif; font-style: italic; font-weight: 700;
+    font-size: 1.15em; line-height: 1; color: var(--accent); transform: translateY(-0.02em); }
   .pillmenu { position: absolute; z-index: 5; top: calc(100% + .4rem); left: 0; min-width: 12rem;
     background: var(--card); border-radius: .8rem; box-shadow: 0 6px 24px rgba(0,0,0,.16); padding: .35rem; }
   .pillmenu button { display: block; width: 100%; text-align: left; padding: .6rem .7rem;
