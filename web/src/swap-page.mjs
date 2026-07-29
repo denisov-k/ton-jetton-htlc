@@ -192,6 +192,12 @@ async function pollReverse() {
     if (st.state === 'jettons-locked') return takeJettons(st);
     if (st.state === 'done') return finishReverse();
     if (st.state === 'expired') return show('status', 'сделка не состоялась. Монеты вернутся на твой кошелёк после срока замка.');
+    if (st.state === 'awaiting-frc' && deal.frcLockTxid) {
+      // the guest's own lock is what the chain is confirming right now — say so, with a link
+      const el = $('status');
+      const html = `<a href="https://freicoin.ru/explorer/tx/${deal.frcLockTxid}" target="_blank" rel="noopener">FRC заперты в цепи и ждут подтверждения сетью</a>`;
+      if (el.innerHTML !== html) el.innerHTML = html;
+    }
     await sleep(7000);
   }
 }
