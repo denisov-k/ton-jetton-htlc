@@ -304,7 +304,7 @@ function finish(st) {
   $('done').hidden = false;
   $('form').hidden = true;
   show('doneAddr', payout);
-  const a = $('expl'); if (a && t) { a.href = 'https://freicoin.info/tx/' + t; a.hidden = false; a.textContent = 'посмотреть выплату в обозревателе'; }
+  const a = $('expl'); if (a && t) { a.href = 'https://freicoin.ru/explorer/tx/' + t; a.hidden = false; a.textContent = 'посмотреть выплату в обозревателе'; }
   if (raw) { $('rawWrap').hidden = false; show('rawtx', raw); }
   forget(deal);
 }
