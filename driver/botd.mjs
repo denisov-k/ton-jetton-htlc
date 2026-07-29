@@ -111,8 +111,43 @@ const api = {
     log(s.id, 'FRC claim broadcast', txid);
     return { txid };
   },
+
+  // ---- reverse direction: the visitor gives FRC and wants jettons ------------------------------
+  // The visitor invents the secret and locks FRC claimable by US (short clock, since they reveal),
+  // refundable to themselves. We answer by locking jettons claimable by them. They claim the
+  // jettons — revealing the secret on TON — and we read it off TON to claim the FRC.
+  async offerReverse(b) {
+    const jettons = BigInt(b.jettons ?? 0);
+    if (jettons < BigInt(CFG.minJettons) || jettons > BigInt(CFG.maxJettons)) throw new Error('сумма вне лимитов');
+    if (!/^[0-9a-f]{64}$/.test(b.hash ?? '')) throw new Error('bad hash');
+    if (!/^[0-9a-f]{66}$/.test(b.frcRefundPub ?? '')) throw new Error('bad frcRefundPub');
+    Address.parse(b.tonRecipient);
+    const frcAmount = BigInt(Math.floor(Number(jettons) * CFG.rateFrcPerJetton));
+    if (frcAmount <= 100000n) throw new Error('слишком мелко');
+    if (BigInt(CFG.reserveJettons ?? 0) < jettons) throw new Error('в резерве недостаточно токенов');
+    // the FRC lock the visitor must fund: we claim with the secret, they refund after a short clock
+    const frcCltv = node.tip() + (CFG.reverseFrcBlocks ?? 6);
+    const lock = frcLock({ paymentHash: b.hash, claimPub: PUB, refundPub: b.frcRefundPub, cltv: frcCltv, net: CFG.frc.net });
+    const s = store({
+      id: b.hash.slice(0, 16), hash: b.hash, dir: 'reverse', state: 'awaiting-frc', createdAt: Date.now(),
+      jettons: String(jettons), frcAmount: String(frcAmount),
+      frcRefundPub: b.frcRefundPub, tonRecipient: b.tonRecipient,
+      frcCltv, frcLockSpk: lock.spk, frcLockLeaf: lock.leaf, frcLockAddress: lock.address,
+      tonDeadline: Math.floor(Date.now() / 1000) + CFG.tonSeconds,
+    });
+    log(s.id, 'reverse offer:', frcAmount, 'kria FRC →', jettons, 'jettons; visitor funds', lock.address);
+    return { id: s.id, frcClaimPub: PUB, frcCltv, frcAddress: lock.address, frcAmount: String(frcAmount),
+      tonDeadline: s.tonDeadline, master: CFG.ton.jettonMaster, governed: CFG.ton.governed,
+      chain: CFG.ton.chain, tonSender: (await ton()).wallet.address.toString() };
+  },
+
+  async statusReverse(b) {
+    const s = swaps.get(String(b.id ?? '')); if (!s || s.dir !== 'reverse') throw new Error('no such swap');
+    return { id: s.id, state: s.state, tonAddress: s.tonAddress ?? null, tonDeadline: s.tonDeadline,
+      jettons: s.jettons, frcAmount: s.frcAmount, frcClaimTxid: s.frcClaimTxid ?? null, tip: node.tip() };
+  },
 };
-const WRITE = new Set(['offer', 'claim']);
+const WRITE = new Set(['offer', 'claim', 'offerReverse']);
 
 // ---- the machine -------------------------------------------------------------------------------
 async function tick() {
@@ -120,6 +155,8 @@ async function tick() {
   for (const s of [...swaps.values()]) {
     try {
       const secsLeft = s.tonDeadline - Math.floor(Date.now() / 1000);
+
+      if (s.dir === 'reverse') { await tickReverse(s, t, secsLeft); continue; }
 
       if (s.state === 'open') {
         if (secsLeft <= 0) { s.state = 'expired'; store(s); continue; }
@@ -173,6 +210,69 @@ async function tick() {
       }
     } catch (e) { log(s.id, 'tick error:', e.message?.slice(0, 200)); }
   }
+}
+
+// reverse: FRC in, jettons out. Mirror of the forward machine with the legs swapped.
+async function tickReverse(s, t, secsLeft) {
+  // 1. the visitor funds an FRC lock claimable by us; verify it, then lock jettons for them
+  if (s.state === 'awaiting-frc') {
+    if (node.tip() >= s.frcCltv) { s.state = 'expired'; store(s); return; }
+    const funded = frcLockFunded(s);
+    if (!funded) return;
+    if (secsLeft < CFG.minSeconds) { log(s.id, 'FRC funded too late — leaving it to the visitor to refund'); return; }
+    s.frcLockInfo = { txid: funded.txid, vout: funded.vout, value: s.frcAmount, refheight: funded.refheight,
+      cltv: s.frcCltv, leaf: s.frcLockLeaf };
+    // lock jettons the visitor can claim, with us as sender/refund
+    const tl = tonLock({ codeCell: HTLC_CODE, paymentHash: s.hash, deadline: s.tonDeadline,
+      master: Address.parse(CFG.ton.jettonMaster), walletCode: t.j.walletCode, governed: CFG.ton.governed,
+      sender: t.wallet.address, recipient: Address.parse(s.tonRecipient) });
+    s.tonAddress = tl.address.toString();
+    if (!(await tonState(t.client, tl)).deployed) { log(s.id, 'deploying jetton lock', s.tonAddress); await (await import('./ton-leg.mjs')).tonDeploy(t.wallet, t.client, tl); }
+    const mine = await t.j.walletOf(t.wallet.address);
+    log(s.id, 'FRC lock verified — locking', s.jettons, 'jettons for the visitor');
+    await (await import('./ton-leg.mjs')).tonFund(t.wallet, mine, tl, BigInt(s.jettons), t.wallet.address, '0.13', '0.05');
+    s.state = 'jettons-locked'; store(s);
+  }
+
+  // 2. wait for the visitor to claim the jettons (which reveals the secret on TON), then take FRC
+  if (s.state === 'jettons-locked') {
+    if (node.tip() >= s.frcCltv) {
+      // our FRC claim window is closing and no secret appeared; the jettons will refund to us on their deadline
+      log(s.id, 'FRC claim window closed without a secret — will refund jettons after their deadline');
+      s.state = 'reverse-stuck'; store(s); return;
+    }
+    const tl = tonLock({ codeCell: HTLC_CODE, paymentHash: s.hash, deadline: s.tonDeadline,
+      master: Address.parse(CFG.ton.jettonMaster), walletCode: t.j.walletCode, governed: CFG.ton.governed,
+      sender: t.wallet.address, recipient: Address.parse(s.tonRecipient) });
+    const preimage = await (await import('./ton-leg.mjs')).tonRevealedPreimage(t.client, tl);
+    if (!preimage || sha256hex(Buffer.from(preimage, 'hex')) !== s.hash) return;
+    log(s.id, 'secret revealed on TON — claiming the FRC');
+    const claim = (await import('./frc-leg.mjs')).frcClaim({ node,
+      lock: { leaf: s.frcLockLeaf, cltv: s.frcCltv },
+      funding: { txid: s.frcLockInfo.txid, vout: s.frcLockInfo.vout, value: BigInt(s.frcAmount), refheight: s.frcLockInfo.refheight },
+      preimage, claimKey: KEY, toSpk: frcWpkSpk(PUB), fee: BigInt(CFG.frc.fee) });
+    s.state = 'done'; s.preimage = preimage; s.frcClaimTxid = claim.txid; store(s);
+    log(s.id, 'done: FRC claimed', claim.txid);
+  }
+
+  // stuck: the visitor never claimed, our FRC window passed. Refund the jettons once their deadline hits.
+  if (s.state === 'reverse-stuck' && secsLeft <= 0) {
+    const tl = tonLock({ codeCell: HTLC_CODE, paymentHash: s.hash, deadline: s.tonDeadline,
+      master: Address.parse(CFG.ton.jettonMaster), walletCode: t.j.walletCode, governed: CFG.ton.governed,
+      sender: t.wallet.address, recipient: Address.parse(s.tonRecipient) });
+    log(s.id, 'refunding our jettons');
+    await (await import('./ton-leg.mjs')).tonRefund(t.wallet, tl, '0.15');
+    s.state = 'jettons-refunded'; store(s);
+  }
+}
+
+// find the visitor's FRC lock paying our expected spk; returns {txid, vout, refheight} or null
+function frcLockFunded(s) {
+  try {
+    const scan = node.json('scantxoutset', 'start', JSON.stringify([`addr(${s.frcLockAddress})`]));
+    const u = (scan.unspents || []).find(x => BigInt(Math.round(x.value * 1e8)) >= BigInt(s.frcAmount));
+    return u ? { txid: u.txid, vout: u.vout, refheight: u.refheight } : null;
+  } catch { return null; }
 }
 
 function preimageFromClaim(s) {

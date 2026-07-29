@@ -30,5 +30,7 @@
     "decimals": 9,
     "chain": "testnet",
     "claimGas": "0.06"
-  }
+  },
+  "reserveJettons": 100000,
+  "reverseFrcBlocks": 6
 }
