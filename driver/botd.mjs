@@ -141,6 +141,21 @@ const api = {
       chain: CFG.ton.chain, tonSender: (await ton()).wallet.address.toString() };
   },
 
+  // Confirmed UTXOs for a wallet's own scripts, so it can fund a lock before its light client has
+  // finished verifying the chain. The node here has the full mainnet UTXO set; the wallet still
+  // signs every input itself, so this only tells it which of ITS OWN coins are real and confirmed.
+  // A convenience, not custody — and it can only ever surface coins that pay the scripts asked for.
+  async walletUtxos(b) {
+    const spks = (b.spks || []).filter(x => typeof x === 'string' && /^[0-9a-f]{4,200}$/.test(x)).slice(0, 80);
+    if (!spks.length) return { utxos: [], tip: node.tip() };
+    const scan = node.json('scantxoutset', 'start', JSON.stringify(spks.map(s => `raw(${s})`)));
+    const utxos = (scan.unspents || []).map(u => ({
+      txid: u.txid, vout: u.vout, nominal: u.value, refheight: u.refheight,
+      coinbase: !!u.coinbase, scriptPubKey: u.scriptPubKey,
+    }));
+    return { utxos, tip: node.tip() };
+  },
+
   // Everything a wallet needs to rebuild the lock itself and refuse if it does not match.
   // The wallet is told the terms, never an address to pay blindly.
   async statusReverse(b) {
