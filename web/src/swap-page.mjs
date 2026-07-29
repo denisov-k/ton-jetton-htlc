@@ -321,6 +321,7 @@ async function refundJettons() {
 }
 
 function resume() {
+  setDirLocked();                          // reveal the wallet pills even though the form is owned by a deal
   if (deal.dir === 'back') {
     dir = 'back';
     if (deal.phase === 'lock-frc') {
