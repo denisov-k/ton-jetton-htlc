@@ -341,7 +341,6 @@ function resume() {
   // the deal survived a reload; put its numbers back on screen so it does not look empty
   const jEl = $('jettons'); if (jEl) jEl.value = Number(deal.jettons) / 10 ** quote.decimals;
   show('frcOut', `≈ ${fmtFrc(Number(deal.jettons) * quote.rate)} FRC`);
-  show('status', 'нашли незавершённую сделку, продолжаем…');
   if (deal.phase === 'lock') lockJettons().catch(e => show('status', e.message));
   else poll();
   if (Date.now() / 1000 > deal.tonDeadline) { $('refund').hidden = false; $('refund').onclick = refundJettons; }
