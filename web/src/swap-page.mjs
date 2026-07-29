@@ -322,10 +322,19 @@ async function refundJettons() {
 
 function resume() {
   if (deal.dir === 'back') {
-    dir = 'back'; setDirLocked();
+    dir = 'back';
+    if (deal.phase === 'lock-frc') {
+      // nothing was locked — treat it as unstarted so a reload doesn't strand or auto-redirect
+      const amt = Number(deal.jettons) / 10 ** quote.decimals;
+      forget(deal); deal = null;
+      setDir('back'); lockForm(false, 'Обменять');
+      $('jettons').value = amt; $('jettons').dispatchEvent(new Event('input'));
+      show('status', 'обмен не был подтверждён в кошельке — нажми «Обменять», чтобы начать заново');
+      return;
+    }
+    setDirLocked();
     $('jettons').value = Number(deal.jettons) / 10 ** quote.decimals;
-    if (deal.phase === 'lock-frc') lockFrc().catch(e => show('status', e.message));
-    else pollReverse();
+    pollReverse();
     return;
   }
   // the deal survived a reload; put its numbers back on screen so it does not look empty
