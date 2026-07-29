@@ -351,8 +351,8 @@ function resume() {
 function paintFrcPill() {
   const b = $('frcConnect');
   b.innerHTML = frcAcct
-    ? `${frcAcct.payout.slice(0, 8)}…${frcAcct.payout.slice(-4)} <span class="chev">▾</span>`
-    : 'Подключить FRC-кошелёк';
+    ? `<span class="pillmark">ƒ</span> ${frcAcct.payout.slice(0, 6)}…${frcAcct.payout.slice(-4)} <span class="chev">▾</span>`
+    : '<span class="pillmark">ƒ</span> Подключить кошелёк';
   $('frcWho').hidden = true;
   const pay = $('payout');
   if (frcAcct && pay && !pay.value) pay.value = frcAcct.payout;   // no address to copy by hand
