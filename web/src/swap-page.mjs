@@ -256,9 +256,6 @@ async function lockJettons() {
 async function poll() {
   step(3);
   lockForm(true, 'сделка идёт…');
-  // the daemon's answer owns this line; a resumed deal may have progressed past any phrase we
-  // could guess here, so seed only a neutral placeholder when the line is empty
-  if (!$('status').textContent) show('status', 'проверяем состояние сделки…');
   for (;;) {
     let st;
     try { st = await api('status', { id: deal.id }); } catch { await sleep(7000); continue; }
