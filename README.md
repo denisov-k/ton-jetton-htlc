@@ -95,6 +95,9 @@ first, and only then locked the coins on Freicoin.
 `scripts/testnet.mjs` and `scripts/mainnet.mjs` are those runs. They expect a `testnet-wallet.json`
 holding a mnemonic — a throwaway wallet, never a real one; the file is git-ignored for a reason.
 
+Since then the same halves have carried real POK against mainnet FRC in both directions, driven
+from a phone through the swap desk below.
+
 ## The driver
 
 `driver/` turns the contract into an actual swap between two people. Each side runs its own
@@ -168,14 +171,43 @@ from any other wallet would hand the timeout exit to a stranger.
 `node driver/swap.mjs invite --id <swap id>` prints the link. `npm run page` rebuilds the bundle.
 A live copy sits at https://freicoin.ru/swap/lock.html.
 
+## The swap desk
+
+`web/swap.html` (live at https://freicoin.ru/swap) is the whole thing folded into one page for a
+visitor who just wants to trade: pick a direction, type an amount, connect two wallets, press one
+button. The house side is `driver/botd.mjs` — a daemon that quotes a rate, holds the inventory,
+and answers every swap as the counterparty. It runs as `deploy/fw-tonswap.service`.
+
+**Jettons → FRC.** The browser invents the secret and an ephemeral claim key (they never leave
+it), the visitor's own TON wallet locks the jettons, the daemon verifies that lock — amount, hash,
+deadline, and that the contract is this repo's code cell — and locks FRC claimable by the
+ephemeral key. The page re-verifies the daemon's lock from the raw transaction bytes (script,
+value, txid) before signing the claim, waits for one confirmation so nothing is revealed against
+a replaceable transaction, and pays out to the connected wallet's address. The signed claim stays
+on screen: the daemon is also the broadcast path, and a server that swallowed a claim would be
+holding a preimage, so the visitor can push the transaction through any node.
+
+**FRC → jettons.** The mirror, with one twist: the coins belong to the wallet at freicoin.ru, so
+the page cannot sign. It hands off to the wallet **by same-tab redirect** (popups die on mobile
+Safari), passing only a swap id. The wallet fetches the terms from the daemon itself, rebuilds
+the lock, and refuses unless the refund key in it is its own — a hand-crafted link can only ever
+point at a real offer whose timeout pays the wallet's owner. If the light client has not finished
+verifying the chain yet, the wallet funds the lock from confirmed UTXOs the daemon reports for
+the wallet's own scripts — it still signs every input itself, so this borrows "which of my coins
+are confirmed", never a key.
+
+Deals survive reloads (one localStorage slot per deal — a shared slot once cost a secret when a
+second deal overwrote the first), a second deal cannot start while one is running, and both
+directions were proven end to end against live chains, headlessly and by hand on a phone.
+
 ## What is missing
 
-- **Somewhere to meet.** The offer travels by hand. Two people who want to swap still have to find
-  each other and agree a rate; there is no order book here.
-- **Unattended operation.** `collect` polls while you watch it. In earnest it wants to be a service
-  that survives restarts and never sleeps through a deadline.
-- **An audit.** The contract was written from scratch in FunC and has never been reviewed. The live
-  runs above deliberately used amounts worth less than a dollar.
+- **An audit.** The contract was written from scratch in FunC and has never been reviewed. The
+  live runs and the desk's limits deliberately keep amounts small.
+- **A second market maker.** The desk is one daemon with one inventory and an operator-set rate.
+  Fine for a pilot, a single point of price-setting all the same.
+- **TON API keys.** Public endpoints rate-limit and occasionally lie about fresh accounts
+  (exit `-13`); the daemon retries around both, but a keyed endpoint would remove the noise.
 
 ## The other half
 
