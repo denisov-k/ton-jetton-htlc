@@ -259,6 +259,11 @@ async function poll() {
   for (;;) {
     let st;
     try { st = await api('status', { id: deal.id }); } catch { await sleep(7000); continue; }
+    // early phases: the wallet part is done, the counterparty is working — say so
+    if (st.state === 'open' || st.state === 'jetton-locked') {
+      const t = 'Токены заперты. Ждём, пока вторая сторона запрёт FRC…';
+      if ($('status').textContent !== t) show('status', t);
+    }
     if (st.state === 'frc-locked' && st.frcRawTx) {
       if ((st.frcConfirmations ?? 0) >= 1) return claimFrc(st);
       // the whole line is a link to the lock transaction on the public explorer
