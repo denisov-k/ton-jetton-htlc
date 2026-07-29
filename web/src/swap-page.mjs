@@ -351,7 +351,7 @@ function resume() {
 function paintFrcPill() {
   const b = $('frcConnect');
   b.innerHTML = frcAcct
-    ? `<span class="pillmark">ƒ</span> ${frcAcct.payout.slice(0, 6)}…${frcAcct.payout.slice(-4)} <span class="chev">▾</span>`
+    ? `<span class="pillmark">ƒ</span> ${frcAcct.payout.slice(0, 6)}…${frcAcct.payout.slice(-4)} <span class="chev">⌄</span>`
     : '<span class="pillmark">ƒ</span> Connect Wallet';
   $('frcWho').hidden = true;
   const pay = $('payout');
