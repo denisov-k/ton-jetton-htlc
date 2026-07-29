@@ -25,12 +25,31 @@ const step = n => { for (let i = 1; i <= 4; i++) $('s' + i).classList.toggle('on
 const hex = a => [...a].map(b => b.toString(16).padStart(2, '0')).join('');
 const rand32 = () => hex(crypto.getRandomValues(new Uint8Array(32)));
 
-const S_KEY = 'tonswap_active';
-const saved = () => { try { return JSON.parse(localStorage.getItem(S_KEY) || 'null'); } catch { return null; } };
-const save = s => localStorage.setItem(S_KEY, JSON.stringify(s));
+// One slot per deal, plus a pointer to the current one. A single shared slot used to be
+// overwritten the moment a second deal started, and the first deal's secret went with it —
+// leaving real money locked on both chains with nobody able to open it.
+const S_KEY = 'tonswap_active';                       // pointer: id of the deal in progress
+const dealKey = id => 'tonswap_deal_' + id;
+const saved = () => {
+  try {
+    const id = localStorage.getItem(S_KEY);
+    if (!id) return null;
+    return JSON.parse(localStorage.getItem(dealKey(id)) || 'null');
+  } catch { return null; }
+};
+const save = s => {
+  localStorage.setItem(dealKey(s.id), JSON.stringify(s));
+  localStorage.setItem(S_KEY, s.id);
+};
+const forget = s => { localStorage.removeItem(S_KEY); if (s?.id) localStorage.setItem(dealKey(s.id), JSON.stringify({ ...s, phase: 'done' })); };
+// any deal whose secret we still hold and which never finished
+const strays = () => Object.keys(localStorage).filter(k => k.startsWith('tonswap_deal_'))
+  .map(k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } })
+  .filter(d => d && !TERMINAL.has(d.phase));
 const OP = { transfer: 0xf8a7ea5, refund: 0x72656664 };
 
 const TERMINAL = new Set(['claimed', 'done', 'expired', 'refunded']);
+
 let dir = 'fwd';                 // 'fwd' = jettons in, coins out; 'back' = coins in, jettons out
 let frcAcct = null;              // {pub, payout} handed over by the wallet popup
 let quote, ui, deal = (() => { const d = saved(); if (d && TERMINAL.has(d.phase)) { localStorage.removeItem(S_KEY); return null; } return d; })();
@@ -107,11 +126,17 @@ async function start() {
     } catch (e) { show('status', 'не вышло: ' + e.message); }
   };
   setDir('fwd');
-  if (deal) resume(); else lockForm(false, 'Обменять');
+  if (deal) resume();
+  else {
+    lockForm(false, 'Обменять');
+    const left = strays().filter(d => d.id !== deal?.id);
+    if (left.length) show('status', `Есть незавершённая сделка (${left[0].id}). Токены по ней вернутся на твой кошелёк по таймауту — ничего делать не нужно.`);
+  }
 }
 
 async function begin() {
   try {
+    if (deal) return show('status', 'сделка уже идёт — дождись её конца или верни токены по таймауту');
     if (!ui.account) return show('status', 'сначала подключи кошелёк — кнопка выше');
     const jettons = BigInt(Math.round(Number($('jettons').value || 0) * 10 ** quote.decimals));
     const payout = $('payout').value.trim();
@@ -132,6 +157,7 @@ async function begin() {
 // Mirror of begin(): the secret is still ours, but now it locks OUR coins and the daemon answers
 // with jettons. The FRC lock is signed by the wallet popup, never here — this page has no seed.
 async function beginReverse() {
+  if (deal) return show('status', 'сделка уже идёт — дождись её конца');
   if (!ui.account) return show('status', 'подключи Tonkeeper — туда придут токены');
   if (!frcAcct) return show('status', 'подключи FRC-кошелёк — с него уйдут монеты');
   const jettons = BigInt(Math.round(Number($('jettons').value || 0) * 10 ** quote.decimals));
@@ -195,7 +221,7 @@ function finishReverse() {
   show('doneAddr', deal.tonRecipient);
   const a = $('expl');
   if (a) { a.href = (quote.chain === 'testnet' ? 'https://testnet.tonviewer.com/' : 'https://tonviewer.com/') + deal.tonRecipient; a.hidden = false; a.textContent = 'посмотреть кошелёк в tonviewer'; }
-  localStorage.removeItem(S_KEY);
+  forget(deal);
 }
 
 // ---- step 2: lock the jettons with the visitor's own wallet ------------------------------------
@@ -221,7 +247,7 @@ async function lockJettons() {
         payload: transfer.toBoc().toString('base64') },
     ],
   });
-  deal.phase = 'wait-frc'; deal.tonAddress = htlc.toString(); save(deal);
+  deal.phase = 'wait-frc'; deal.tonAddress = htlc.toString(); deal.lockedAt = Date.now(); save(deal);
   poll();
 }
 
@@ -235,7 +261,9 @@ async function poll() {
     try { st = await api('status', { id: deal.id }); } catch { await sleep(7000); continue; }
     if (st.state === 'frc-locked' && st.frcRawTx) {
       if ((st.frcConfirmations ?? 0) >= 1) return claimFrc(st);
-      show('status', `FRC заперты в цепи и ждут подтверждения — блок скоро закроется. Забираем автоматически, как только он придёт.`);
+      const mins = Math.round((Date.now() - (deal.lockedAt ?? Date.now())) / 60000);
+      show('status', `FRC заперты в цепи (${st.frcLock.txid.slice(0, 12)}…) и ждут блока Freicoin. `
+        + `Ждём ${mins} мин — блоки идут неровно, бывает и полчаса. Заберём автоматически, ничего делать не надо.`);
     }
     if (st.state === 'claimed' || st.state === 'done') return finish(st);
     if (st.state === 'expired') return show('status', 'срок вышел, сделка не состоялась. Токены вернутся по таймауту — кнопка возврата появится после срока.');
@@ -279,7 +307,7 @@ function finish(st) {
   show('doneAddr', payout);
   const a = $('expl'); if (a && t) { a.href = 'https://freicoin.info/tx/' + t; a.hidden = false; a.textContent = 'посмотреть выплату в обозревателе'; }
   if (raw) { $('rawWrap').hidden = false; show('rawtx', raw); }
-  localStorage.removeItem(S_KEY);
+  forget(deal);
 }
 
 // after the deadline the jettons walk home on a single wallet message
