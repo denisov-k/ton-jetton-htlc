@@ -354,14 +354,18 @@ function paintFrcPill() {
     ? `${frcAcct.payout.slice(0, 8)}…${frcAcct.payout.slice(-4)} <span class="chev">▾</span>`
     : 'Подключить FRC-кошелёк';
   $('frcWho').hidden = true;
+  const pay = $('payout');
+  if (frcAcct && pay && !pay.value) pay.value = frcAcct.payout;   // no address to copy by hand
+  if (!frcAcct && pay && pay.value === lastFilled) pay.value = '';
+  lastFilled = frcAcct?.payout || '';
 }
+let lastFilled = '';
 
 function setDirLocked() {
   $('dirFwd').classList.toggle('on', dir === 'fwd');
   $('dirBack').classList.toggle('on', dir === 'back');
   $('payoutRow').hidden = dir !== 'fwd';
-  $('frcWrap').hidden = dir === 'fwd';
-  $('frcWho').hidden = dir === 'fwd' || !frcAcct;
+  $('frcWrap').hidden = false;
 }
 
 function setDir(d) {
@@ -370,8 +374,7 @@ function setDir(d) {
   $('dirFwd').classList.toggle('on', d === 'fwd');
   $('dirBack').classList.toggle('on', d === 'back');
   $('payoutRow').hidden = d !== 'fwd';
-  $('frcWrap').hidden = d === 'fwd';     // the FRC wallet only signs in the reverse direction
-  $('frcWho').hidden = d === 'fwd' || !frcAcct;
+  $('frcWrap').hidden = false;           // reverse: it signs. forward: it names where to be paid.
   const label = $('jettons').previousSibling;
   $('jettons').parentElement.childNodes[0].textContent = d === 'fwd' ? 'Сколько токенов отдаёшь' : 'Сколько токенов хочешь получить';
   $('jettons').dispatchEvent(new Event('input'));
