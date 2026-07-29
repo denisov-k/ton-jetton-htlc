@@ -256,7 +256,9 @@ async function lockJettons() {
 async function poll() {
   step(3);
   lockForm(true, 'сделка идёт…');
-  show('status', 'Токены заперты. Ждём, пока вторая сторона запрёт FRC (это один блок Freicoin — до 20–30 минут)…');
+  // the daemon's answer owns this line; only seed it when there is nothing there yet,
+  // so a resume doesn't flash a stale phrase before the first real status arrives
+  if (!$('status').textContent) show('status', 'Токены заперты. Ждём, пока вторая сторона запрёт FRC…');
   for (;;) {
     let st;
     try { st = await api('status', { id: deal.id }); } catch { await sleep(7000); continue; }
