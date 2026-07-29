@@ -96,17 +96,17 @@
   <ol class="steps">
     <li id="s1" class="on">сумма</li><li id="s2">запереть</li><li id="s3">обмен</li><li id="s4">готово</li>
   </ol>
+  <div class="wallets">
+    <div id="connect"></div>
+    <span class="pillwrap" id="frcWrap" hidden>
+      <button class="pill" id="frcConnect"><span class="pillmark">ƒ</span> Connect Wallet</button>
+      <div class="pillmenu" id="frcMenu" hidden>
+        <button id="frcCopy">Скопировать адрес</button>
+        <button id="frcOff">Отключить</button>
+      </div>
+    </span>
+  </div>
   <div class="card" id="form">
-    <div class="wallets">
-      <div id="connect"></div>
-      <span class="pillwrap" id="frcWrap" hidden>
-        <button class="pill" id="frcConnect"><span class="pillmark">ƒ</span> Connect Wallet</button>
-        <div class="pillmenu" id="frcMenu" hidden>
-          <button id="frcCopy">Скопировать адрес</button>
-          <button id="frcOff">Отключить</button>
-        </div>
-      </span>
-    </div>
     <label>Сколько токенов отдаёшь
       <input id="jettons" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
     </label>
