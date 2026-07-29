@@ -143,8 +143,8 @@ async function begin() {
     if (deal) return show('status', 'сделка уже идёт — дождись её конца или верни токены по таймауту');
     if (!ui.account) return show('status', 'сначала подключи кошелёк — кнопка выше');
     const jettons = BigInt(Math.round(Number($('jettons').value || 0) * 10 ** quote.decimals));
-    const payout = $('payout').value.trim();
-    try { decodeWitness(payout); } catch { return show('status', 'FRC-адрес не читается — скопируй его из кошелька на freicoin.ru'); }
+    if (!frcAcct) return show('status', 'подключи FRC-кошелёк — на него придут монеты');
+    const payout = frcAcct.payout;
     const secret = rand32();
     const claimKey = rand32();
     const me = Address.parse(ui.account.address).toString({ bounceable: false, testOnly: quote.chain === 'testnet' });
@@ -339,7 +339,6 @@ function resume() {
   }
   // the deal survived a reload; put its numbers back on screen so it does not look empty
   const jEl = $('jettons'); if (jEl) jEl.value = Number(deal.jettons) / 10 ** quote.decimals;
-  const pEl = $('payout'); if (pEl) pEl.value = deal.payout;
   show('frcOut', `≈ ${fmtFrc(Number(deal.jettons) * quote.rate)} FRC`);
   show('status', 'нашли незавершённую сделку, продолжаем…');
   if (deal.phase === 'lock') lockJettons().catch(e => show('status', e.message));
@@ -351,20 +350,14 @@ function resume() {
 function paintFrcPill() {
   const b = $('frcConnect');
   b.innerHTML = frcAcct
-    ? `<span class="pillmark">ƒ</span> ${frcAcct.payout.slice(0, 6)}…${frcAcct.payout.slice(-4)} <svg class="chev" width="9" height="9" viewBox="0 0 16 16" fill="none"><path transform="rotate(-90 8 8)" fill="currentColor" d="M10.2122 14.3407C10.5384 14.0854 10.5959 13.614 10.3406 13.2878L6.20237 8.00003L10.3406 2.71227C10.5959 2.38607 10.5384 1.91469 10.2122 1.6594C9.88604 1.40412 9.41465 1.46161 9.15937 1.7878L4.65937 7.5378C4.44688 7.80932 4.44688 8.19074 4.65937 8.46226L9.15937 14.2123C9.41465 14.5385 9.88604 14.5959 10.2122 14.3407Z"/></svg>`
+    ? `<span class="pillmark">ƒ</span> ${frcAcct.payout.slice(0, 6)}…${frcAcct.payout.slice(-4)} <svg class="chev" width="15" height="15" viewBox="0 0 16 16" fill="none"><path transform="rotate(-90 8 8)" fill="currentColor" d="M10.2122 14.3407C10.5384 14.0854 10.5959 13.614 10.3406 13.2878L6.20237 8.00003L10.3406 2.71227C10.5959 2.38607 10.5384 1.91469 10.2122 1.6594C9.88604 1.40412 9.41465 1.46161 9.15937 1.7878L4.65937 7.5378C4.44688 7.80932 4.44688 8.19074 4.65937 8.46226L9.15937 14.2123C9.41465 14.5385 9.88604 14.5959 10.2122 14.3407Z"/></svg>`
     : '<span class="pillmark">ƒ</span> Connect Wallet';
   $('frcWho').hidden = true;
-  const pay = $('payout');
-  if (frcAcct && pay && !pay.value) pay.value = frcAcct.payout;   // no address to copy by hand
-  if (!frcAcct && pay && pay.value === lastFilled) pay.value = '';
-  lastFilled = frcAcct?.payout || '';
 }
-let lastFilled = '';
 
 function setDirLocked() {
   $('dirFwd').classList.toggle('on', dir === 'fwd');
   $('dirBack').classList.toggle('on', dir === 'back');
-  $('payoutRow').hidden = dir !== 'fwd';
   $('frcWrap').hidden = false;
 }
 
@@ -373,7 +366,6 @@ function setDir(d) {
   dir = d;
   $('dirFwd').classList.toggle('on', d === 'fwd');
   $('dirBack').classList.toggle('on', d === 'back');
-  $('payoutRow').hidden = d !== 'fwd';
   $('frcWrap').hidden = false;           // reverse: it signs. forward: it names where to be paid.
   const label = $('jettons').previousSibling;
   $('jettons').parentElement.childNodes[0].textContent = d === 'fwd' ? 'Сколько токенов отдаёшь' : 'Сколько токенов хочешь получить';
@@ -403,7 +395,7 @@ async function handleWalletReturn(back) {
 }
 
 function lockForm(on, label) {
-  for (const id of ['jettons', 'payout', 'go']) { const e = $(id); if (e) e.disabled = on; }
+  for (const id of ['jettons', 'go']) { const e = $(id); if (e) e.disabled = on; }
   if (label) $('go').textContent = label;
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
