@@ -109,7 +109,10 @@ async function start() {
   quote = await api('quote');
   const perToken = quote.rate * 10 ** quote.decimals / 1e8;   // FRC per one whole jetton
   show('rate', `1 ${quote.symbol} ≈ ${perToken.toLocaleString('ru-RU', { maximumFractionDigits: 6 })} FRC · лимиты ${fmtJ(quote.minJettons)}–${fmtJ(quote.maxJettons)} ${quote.symbol}`);
-  try { ui = new TonConnectUI({ manifestUrl: 'https://freicoin.ru/swap/tonconnect-manifest.json', buttonRootId: 'connect' }); }
+  try {
+    ui = new TonConnectUI({ manifestUrl: 'https://freicoin.ru/swap/tonconnect-manifest.json', buttonRootId: 'connect',
+      actionsConfiguration: { returnStrategy: 'back', twaReturnUrl: 'https://freicoin.ru/swap/' } });
+  }
   catch (e) { show('status', 'кошелёк не инициализировался: ' + e.message + ' — обнови страницу'); return; }
   $('jettons').oninput = () => {
     const raw = BigInt(Math.round(Number($('jettons').value || 0) * 10 ** quote.decimals));
