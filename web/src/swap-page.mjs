@@ -30,7 +30,8 @@ const saved = () => { try { return JSON.parse(localStorage.getItem(S_KEY) || 'nu
 const save = s => localStorage.setItem(S_KEY, JSON.stringify(s));
 const OP = { transfer: 0xf8a7ea5, refund: 0x72656664 };
 
-let quote, ui, deal = saved();
+const TERMINAL = new Set(['claimed', 'done', 'expired', 'refunded']);
+let quote, ui, deal = (() => { const d = saved(); if (d && TERMINAL.has(d.phase)) { localStorage.removeItem(S_KEY); return null; } return d; })();
 
 function fmtJ(v) { return (Number(v) / 10 ** quote.decimals).toLocaleString('ru-RU'); }
 function fmtFrc(v) { return (Number(v) / 1e8).toLocaleString('ru-RU', { maximumFractionDigits: 8 }); }
@@ -65,7 +66,8 @@ async function start() {
   quote = await api('quote');
   const perToken = quote.rate * 10 ** quote.decimals / 1e8;   // FRC per one whole jetton
   show('rate', `1 ${quote.symbol} ≈ ${perToken.toLocaleString('ru-RU', { maximumFractionDigits: 6 })} FRC · лимиты ${fmtJ(quote.minJettons)}–${fmtJ(quote.maxJettons)} ${quote.symbol}`);
-  ui = new TonConnectUI({ manifestUrl: 'https://freicoin.ru/swap/tonconnect-manifest.json', buttonRootId: 'connect' });
+  try { ui = new TonConnectUI({ manifestUrl: 'https://freicoin.ru/swap/tonconnect-manifest.json', buttonRootId: 'connect' }); }
+  catch (e) { show('status', 'кошелёк не инициализировался: ' + e.message + ' — обнови страницу'); return; }
   $('jettons').oninput = () => {
     const raw = BigInt(Math.round(Number($('jettons').value || 0) * 10 ** quote.decimals));
     show('frcOut', raw > 0n ? `≈ ${fmtFrc(Number(raw) * quote.rate)} FRC` : '');
@@ -161,9 +163,13 @@ async function claimFrc(st) {
 function finish(st) {
   step(4);
   const t = st.frcClaimTxid ?? deal.frcClaimTxid;
-  show('status', `Готово. FRC отправлены на ${deal.payout}` + (t ? `\nтранзакция: ${t}` : '')
-    + (deal.claimRawtx ? `\n\nЕсли выплата не видна в обозревателе через 10 минут — вот сырая транзакция, её можно отправить через любой узел Freicoin:\n${deal.claimRawtx}` : ''));
-  const a = $('expl'); if (a && t) { a.href = 'https://freicoin.info/tx/' + t; a.hidden = false; }
+  const raw = deal.claimRawtx;
+  const payout = deal.payout;
+  $('done').hidden = false;
+  $('form').hidden = true;
+  show('doneAddr', payout);
+  const a = $('expl'); if (a && t) { a.href = 'https://freicoin.info/tx/' + t; a.hidden = false; a.textContent = 'посмотреть выплату в обозревателе'; }
+  if (raw) { $('rawWrap').hidden = false; show('rawtx', raw); }
   localStorage.removeItem(S_KEY);
 }
 
