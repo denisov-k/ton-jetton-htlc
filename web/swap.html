@@ -20,11 +20,8 @@
     font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; line-height: 1.5;
     -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 30rem; margin: 0 auto; padding: 1.5rem 1.1rem 3rem; }
-  header { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
-  h1 { font-size: 1.3rem; margin: 0; letter-spacing: -.01em; font-weight: 700; }
-  .logo { font-family: Georgia, serif; font-style: italic; font-weight: 700; font-size: 1.9rem;
-    line-height: 1; color: var(--accent); margin-right: .1rem; }
-  header .tag { margin-left: auto; }   /* push the tag to the far edge, off the wordmark */
+  header { margin-bottom: 1rem; }
+  h1 { font-size: 1.35rem; margin: 0; letter-spacing: -.01em; font-weight: 700; }
   .tag { font-size: .72rem; color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 18%, transparent);
     padding: .1rem .45rem; border-radius: 1rem; font-weight: 600; }
   .steps { display: flex; list-style: none; padding: 0; margin: 1rem 0 1.25rem; font-size: .72rem; }
@@ -90,10 +87,7 @@
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <span class="logo" aria-label="Freicoin">ƒ</span>
-    <h1>Обмен</h1><span class="tag">атомарный своп</span>
-  </header>
+  <header><h1>Атомарный своп</h1></header>
   <div class="dir" role="tablist">
     <button id="dirFwd" class="on" role="tab">POK → FRC</button>
     <button id="dirBack" role="tab">FRC → POK</button>
