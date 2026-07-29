@@ -51,7 +51,11 @@ const OP = { transfer: 0xf8a7ea5, refund: 0x72656664 };
 const TERMINAL = new Set(['claimed', 'done', 'expired', 'refunded']);
 
 let dir = 'fwd';                 // 'fwd' = jettons in, coins out; 'back' = coins in, jettons out
-let frcAcct = null;              // {pub, payout} handed over by the wallet popup
+// The FRC "connection" is a public key and an address — nothing secret, so it survives a reload
+// the way TON Connect's does. Signing still goes through the wallet popup and its unlock every
+// time; this only saves re-introducing ourselves.
+const A_KEY = 'tonswap_frc_acct';
+let frcAcct = (() => { try { return JSON.parse(localStorage.getItem(A_KEY) || 'null'); } catch { return null; } })();
 let quote, ui, deal = (() => { const d = saved(); if (d && TERMINAL.has(d.phase)) { localStorage.removeItem(S_KEY); return null; } return d; })();
 
 function fmtJ(v) { return (Number(v) / 10 ** quote.decimals).toLocaleString('ru-RU'); }
@@ -118,17 +122,19 @@ async function start() {
   $('dirFwd').onclick = () => setDir('fwd');
   $('dirBack').onclick = () => setDir('back');
   $('frcCopy').onclick = () => { navigator.clipboard?.writeText(frcAcct?.payout || ''); $('frcMenu').hidden = true; };
-  $('frcOff').onclick = () => { frcAcct = null; $('frcMenu').hidden = true; paintFrcPill(); };
+  $('frcOff').onclick = () => { frcAcct = null; localStorage.removeItem(A_KEY); $('frcMenu').hidden = true; paintFrcPill(); };
   document.addEventListener('click', e => { if (!$('frcWrap').contains(e.target)) $('frcMenu').hidden = true; });
   $('frcConnect').onclick = async () => {
     if (frcAcct) { $('frcMenu').hidden = !$('frcMenu').hidden; return; }
     try {
       show('status', 'открываем кошелёк…');
       frcAcct = await askWallet('swapsign?req=connect');
+      localStorage.setItem(A_KEY, JSON.stringify(frcAcct));
       paintFrcPill();
       show('status', '');
     } catch (e) { show('status', 'не вышло: ' + e.message); }
   };
+  paintFrcPill();
   setDir('fwd');
   if (deal) resume();
   else {
