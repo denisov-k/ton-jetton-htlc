@@ -121,7 +121,10 @@ async function start() {
     try {
       show('status', 'открываем кошелёк…');
       frcAcct = await askWallet('swapsign?req=connect');
-      show('frcWho', 'кошелёк подключён: ' + frcAcct.payout);
+      $('frcConnect').textContent = frcAcct.payout.slice(0, 8) + '…' + frcAcct.payout.slice(-4);
+      $('frcConnect').classList.add('on');
+      $('frcWho').hidden = false;
+      show('frcWho', 'FRC-кошелёк подключён');
       show('status', '');
     } catch (e) { show('status', 'не вышло: ' + e.message); }
   };
@@ -342,7 +345,8 @@ function setDirLocked() {
   $('dirFwd').classList.toggle('on', dir === 'fwd');
   $('dirBack').classList.toggle('on', dir === 'back');
   $('payoutRow').hidden = dir !== 'fwd';
-  $('frcConnectRow').hidden = dir === 'fwd';
+  $('frcConnect').hidden = dir === 'fwd';
+  $('frcWho').hidden = dir === 'fwd' || !frcAcct;
 }
 
 function setDir(d) {
@@ -351,8 +355,8 @@ function setDir(d) {
   $('dirFwd').classList.toggle('on', d === 'fwd');
   $('dirBack').classList.toggle('on', d === 'back');
   $('payoutRow').hidden = d !== 'fwd';
-  $('frcConnectRow').hidden = d === 'fwd';
-  $('connect').hidden = false;           // TON wallet is needed in both directions
+  $('frcConnect').hidden = d === 'fwd';  // the FRC wallet only signs in the reverse direction
+  $('frcWho').hidden = d === 'fwd' || !frcAcct;
   const label = $('jettons').previousSibling;
   $('jettons').parentElement.childNodes[0].textContent = d === 'fwd' ? 'Сколько токенов отдаёшь' : 'Сколько токенов хочешь получить';
   $('jettons').dispatchEvent(new Event('input'));
