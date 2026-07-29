@@ -6,20 +6,21 @@
 <title>Обменять токены на FRC</title>
 <style>
   :root {
-    --bg: #f6f7f6; --card: #ffffff; --ink: #17201c; --sub: #5d6b64;
-    --line: #e2e7e3; --accent: #1f9e83; --accent-ink: #0c4f41; --field: #fbfcfb;
+    --bg: #eef3f0; --card: #ffffff; --ink: #16211c; --sub: #5a6b63;
+    --line: #dde7e2; --accent: #1f9e83; --accent-ink: #0c4f41; --field: #f4f8f6;
     color-scheme: light dark;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0f1512; --card: #161d19; --ink: #e8efea; --sub: #9aa8a1;
-      --line: #263029; --accent: #35c2a2; --accent-ink: #bff0e4; --field: #10160f; }
+    :root { --bg: #0d1411; --card: #151d19; --ink: #e8efea; --sub: #94a69d;
+      --line: #24302b; --accent: #35c2a2; --accent-ink: #bff0e4; --field: #101713; }
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }   /* label{display:block} would otherwise beat it */
   body { margin: 0; background: var(--bg); color: var(--ink);
     font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; line-height: 1.5;
     -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 30rem; margin: 0 auto; padding: 1.5rem 1.1rem 3rem; }
+  body { min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; }
+  .wrap { max-width: 30rem; width: 100%; margin: 0 auto; padding: 1.5rem 1.1rem; }
   header { margin-bottom: 1rem; text-align: center; }
   h1 { font-size: 1.35rem; margin: 0; letter-spacing: -.01em; font-weight: 700; }
   .tag { font-size: .72rem; color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 18%, transparent);
@@ -33,10 +34,12 @@
   .steps li.on { color: var(--accent-ink); font-weight: 600; }
   .steps li.on::before { background: var(--accent); }
   .steps li.on::after { background: var(--accent); }
-  .dir { display: flex; gap: .35rem; margin: 0 0 .9rem; }
+  .dir { display: flex; gap: .25rem; margin: 0 0 1rem; padding: .25rem; background: var(--field);
+    border: 1px solid var(--line); border-radius: .7rem; }
   .dir button { flex: 1; padding: .5rem; font-size: .9rem; cursor: pointer; color: var(--sub);
-    background: var(--field); border: 1px solid var(--line); border-radius: .6rem; }
-  .dir button.on { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+    background: transparent; border: none; border-radius: .5rem; font-weight: 500; }
+  .dir button.on { color: var(--accent-ink); background: var(--card); font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08); }
   .rate { font-size: .82rem; color: var(--sub); margin: .5rem 0 0; font-variant-numeric: tabular-nums; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: .9rem; padding: 1.1rem; }
   .wallets { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
