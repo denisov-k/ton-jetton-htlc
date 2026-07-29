@@ -105,9 +105,8 @@ function walletReturn() {
 
 // ---- step 1: the form --------------------------------------------------------------------------
 async function start() {
-  const back = walletReturn();
+  const back = walletReturn();          // a result the wallet left in the URL, if any
   quote = await api('quote');
-  if (back) return handleWalletReturn(back);
   const perToken = quote.rate * 10 ** quote.decimals / 1e8;   // FRC per one whole jetton
   show('rate', `1 ${quote.symbol} ≈ ${perToken.toLocaleString('ru-RU', { maximumFractionDigits: 6 })} FRC · лимиты ${fmtJ(quote.minJettons)}–${fmtJ(quote.maxJettons)} ${quote.symbol}`);
   try { ui = new TonConnectUI({ manifestUrl: 'https://freicoin.ru/swap/tonconnect-manifest.json', buttonRootId: 'connect' }); }
@@ -130,6 +129,7 @@ async function start() {
   };
   paintFrcPill();
   setDir('fwd');
+  if (back) return handleWalletReturn(back);   // UI is up; now apply what the wallet answered
   if (deal) resume();
   else {
     lockForm(false, 'Обменять');
@@ -382,7 +382,11 @@ function setDir(d) {
 }
 
 async function handleWalletReturn(back) {
-  if (back.error) { show('status', 'кошелёк: ' + back.error); if (deal) resume(); return; }
+  if (back.error) {
+    show('status', 'обмен не подтверждён в кошельке: ' + back.error);
+    if (deal) resume(); else { setDir('back'); lockForm(false, 'Обменять'); }
+    return;
+  }
   if (back.pub) {                                    // a connect result
     frcAcct = { pub: back.pub, payout: back.payout };
     localStorage.setItem(A_KEY, JSON.stringify(frcAcct));
