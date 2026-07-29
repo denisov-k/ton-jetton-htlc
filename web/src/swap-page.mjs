@@ -1,3 +1,4 @@
+import './shim.mjs';
 // swap-page.mjs — the whole visitor side of a POK→FRC swap in one page. The visitor brings a
 // Tonkeeper with jettons and an FRC address to be paid at; everything else happens here:
 // the secret and the ephemeral claim key are born in this browser and never leave it, the jetton
@@ -62,7 +63,8 @@ const jwOf = (owner, master, code) => {
 // ---- step 1: the form --------------------------------------------------------------------------
 async function start() {
   quote = await api('quote');
-  show('rate', `1 ${quote.symbol} = ${fmtFrc(quote.rate)} FRC · лимиты ${fmtJ(quote.minJettons)}–${fmtJ(quote.maxJettons)} ${quote.symbol}`);
+  const perToken = quote.rate * 10 ** quote.decimals / 1e8;   // FRC per one whole jetton
+  show('rate', `1 ${quote.symbol} ≈ ${perToken.toLocaleString('ru-RU', { maximumFractionDigits: 6 })} FRC · лимиты ${fmtJ(quote.minJettons)}–${fmtJ(quote.maxJettons)} ${quote.symbol}`);
   ui = new TonConnectUI({ manifestUrl: 'https://freicoin.ru/swap/tonconnect-manifest.json', buttonRootId: 'connect' });
   $('jettons').oninput = () => {
     const raw = BigInt(Math.round(Number($('jettons').value || 0) * 10 ** quote.decimals));

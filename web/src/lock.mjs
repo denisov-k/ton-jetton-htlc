@@ -1,3 +1,4 @@
+import './shim.mjs';
 // lock.mjs — the page that lets a counterparty lock jettons with nothing but their own wallet.
 // Everything that matters is recomputed here, in the browser, from plain parameters in the URL:
 // the contract address falls out of OUR code cell (baked in at build time) plus the fields shown

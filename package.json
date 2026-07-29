@@ -1,7 +1,7 @@
 {
   "name": "ton-jetton-htlc",
   "version": "0.1.0",
-  "description": "Hashed-timelock contract for TON jettons, matching Freicoin's OP_SHA256 script \u2014 the TON half of a cross-chain atomic swap",
+  "description": "Hashed-timelock contract for TON jettons, matching Freicoin's OP_SHA256 script — the TON half of a cross-chain atomic swap",
   "type": "module",
   "license": "MIT",
   "scripts": {
@@ -17,9 +17,11 @@
     "@ton/crypto": "^3.3.0",
     "@ton/sandbox": "^0.44.0",
     "@ton/ton": "^16.3.0",
-    "@tonconnect/ui": "^3.0.0"
+    "@tonconnect/ui": "^3.0.0",
+    "buffer": "^6.0.3"
   },
   "devDependencies": {
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.1",
+    "jsdom": "^30.0.1"
   }
 }
