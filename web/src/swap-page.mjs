@@ -86,29 +86,28 @@ const jwOf = (owner, master, code) => {
   return new Address(0, si.hash());
 };
 
-// Ask the wallet, on this same origin, to do something only it can: hand over a public key, or
-// fund a lock. The wallet decides for itself what it will sign; we only get the answer back.
-function askWallet(hash) {
-  return new Promise((resolve, reject) => {
-    const w = window.open('/#' + hash, 'fw-wallet', 'width=430,height=760');
-    if (!w) return reject(new Error('всплывающее окно заблокировано — разреши его для freicoin.ru'));
-    const onMsg = e => {
-      if (e.origin !== location.origin || !e.data?.fwSwap) return;
-      window.removeEventListener('message', onMsg);
-      clearInterval(iv);
-      const r = e.data.fwSwap;
-      r.error ? reject(new Error(r.error)) : resolve(r);
-    };
-    window.addEventListener('message', onMsg);
-    const iv = setInterval(() => {
-      if (w.closed) { clearInterval(iv); window.removeEventListener('message', onMsg); reject(new Error('окно кошелька закрыто')); }
-    }, 700);
-  });
+// Hand off to the wallet on this same origin by navigating there in the SAME tab. Popups are
+// blocked on mobile Safari and strand the deal if closed; a redirect always works. The wallet
+// does its thing and navigates back to /swap#swapdone?… with the result. The running deal is in
+// localStorage, so returning simply resumes it.
+function goToWallet(hash) {
+  const ret = encodeURIComponent(location.origin + '/swap/');
+  location.href = `/#${hash}&ret=${ret}`;
+}
+// A result the wallet handed back in the return URL, if any.
+function walletReturn() {
+  const h = location.hash.slice(1);
+  if (!h.startsWith('swapdone')) return null;
+  const q = new URLSearchParams(h.slice(h.indexOf('?') + 1));
+  history.replaceState(null, '', location.pathname);          // clean the URL
+  return q.get('error') ? { error: q.get('error') } : { txid: q.get('txid'), pub: q.get('pub'), payout: q.get('payout') };
 }
 
 // ---- step 1: the form --------------------------------------------------------------------------
 async function start() {
+  const back = walletReturn();
   quote = await api('quote');
+  if (back) return handleWalletReturn(back);
   const perToken = quote.rate * 10 ** quote.decimals / 1e8;   // FRC per one whole jetton
   show('rate', `1 ${quote.symbol} ≈ ${perToken.toLocaleString('ru-RU', { maximumFractionDigits: 6 })} FRC · лимиты ${fmtJ(quote.minJettons)}–${fmtJ(quote.maxJettons)} ${quote.symbol}`);
   try { ui = new TonConnectUI({ manifestUrl: 'https://freicoin.ru/swap/tonconnect-manifest.json', buttonRootId: 'connect' }); }
@@ -124,15 +123,10 @@ async function start() {
   $('frcCopy').onclick = () => { navigator.clipboard?.writeText(frcAcct?.payout || ''); $('frcMenu').hidden = true; };
   $('frcOff').onclick = () => { frcAcct = null; localStorage.removeItem(A_KEY); $('frcMenu').hidden = true; paintFrcPill(); };
   document.addEventListener('click', e => { if (!$('frcWrap').contains(e.target)) $('frcMenu').hidden = true; });
-  $('frcConnect').onclick = async () => {
+  $('frcConnect').onclick = () => {
     if (frcAcct) { $('frcMenu').hidden = !$('frcMenu').hidden; return; }
-    try {
-      show('status', 'открываем кошелёк…');
-      frcAcct = await askWallet('swapsign?req=connect');
-      localStorage.setItem(A_KEY, JSON.stringify(frcAcct));
-      paintFrcPill();
-      show('status', '');
-    } catch (e) { show('status', 'не вышло: ' + e.message); }
+    show('status', 'открываем кошелёк…');
+    goToWallet('swapsign?req=connect');
   };
   paintFrcPill();
   setDir('fwd');
@@ -182,14 +176,11 @@ async function beginReverse() {
   await lockFrc();
 }
 
-async function lockFrc() {
+function lockFrc() {
   step(2);
-  lockForm(true, 'подписываем в кошельке…');
-  show('status', 'Подтверди в кошельке: он сам проверит условия сделки и запрёт монеты.');
-  const r = await askWallet('swapsign?id=' + deal.id);
-  deal.phase = 'wait-jettons'; deal.frcLockTxid = r.txid; save(deal);
-  show('status', 'Монеты заперты (' + r.txid.slice(0, 16) + '…). Ждём, пока вторая сторона запрёт токены…');
-  pollReverse();
+  lockForm(true, 'открываем кошелёк…');
+  show('status', 'Открываем кошелёк — подтверди там обмен и вернёшься сюда.');
+  goToWallet('swapsign?id=' + deal.id);        // the wallet navigates back when done
 }
 
 async function pollReverse() {
@@ -379,6 +370,23 @@ function setDir(d) {
   $('jettons').parentElement.childNodes[0].textContent = d === 'fwd' ? 'Сколько токенов отдаёшь' : 'Сколько токенов хочешь получить';
   $('jettons').dispatchEvent(new Event('input'));
   show('status', '');
+}
+
+async function handleWalletReturn(back) {
+  if (back.error) { show('status', 'кошелёк: ' + back.error); if (deal) resume(); return; }
+  if (back.pub) {                                    // a connect result
+    frcAcct = { pub: back.pub, payout: back.payout };
+    localStorage.setItem(A_KEY, JSON.stringify(frcAcct));
+    paintFrcPill(); setDir('back');
+    return;
+  }
+  if (back.txid && deal) {                            // a lock result
+    deal.phase = 'wait-jettons'; deal.frcLockTxid = back.txid; save(deal);
+    dir = 'back'; setDirLocked();
+    $('jettons').value = Number(deal.jettons) / 10 ** quote.decimals;
+    show('status', 'Монеты заперты (' + back.txid.slice(0, 16) + '…). Ждём, пока вторая сторона запрёт токены…');
+    pollReverse();
+  }
 }
 
 function lockForm(on, label) {

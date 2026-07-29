@@ -28,5 +28,7 @@
     "decimals": 9,
     "chain": "mainnet",
     "claimGas": "0.1"
-  }
+  },
+  "reserveJettons": 5000000000000,
+  "reverseFrcBlocks": 6
 }
