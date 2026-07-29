@@ -261,7 +261,8 @@ async function poll() {
     try { st = await api('status', { id: deal.id }); } catch { await sleep(7000); continue; }
     if (st.state === 'frc-locked' && st.frcRawTx) {
       if ((st.frcConfirmations ?? 0) >= 1) return claimFrc(st);
-      show('status', 'FRC заперты в цепи и ждут подтверждения сетью');
+      // the whole line is a link to the lock transaction on the public explorer
+      $('status').innerHTML = `<a href="https://freicoin.info/tx/${st.frcLock.txid}" target="_blank" rel="noopener">FRC заперты в цепи и ждут подтверждения сетью</a>`;
     }
     if (st.state === 'claimed' || st.state === 'done') return finish(st);
     if (st.state === 'expired') return show('status', 'срок вышел, сделка не состоялась. Токены вернутся по таймауту — кнопка возврата появится после срока.');
