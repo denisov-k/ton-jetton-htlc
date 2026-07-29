@@ -188,6 +188,10 @@ async function refundJettons() {
 }
 
 function resume() {
+  // the deal survived a reload; put its numbers back on screen so it does not look empty
+  const jEl = $('jettons'); if (jEl) jEl.value = Number(deal.jettons) / 10 ** quote.decimals;
+  const pEl = $('payout'); if (pEl) pEl.value = deal.payout;
+  show('frcOut', `≈ ${fmtFrc(Number(deal.jettons) * quote.rate)} FRC`);
   show('status', 'нашли незавершённую сделку, продолжаем…');
   if (deal.phase === 'lock') lockJettons().catch(e => show('status', e.message));
   else poll();
