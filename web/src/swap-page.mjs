@@ -120,6 +120,7 @@ async function start() {
   $('dirFwd').onclick = () => setDir('fwd');
   $('dirBack').onclick = () => setDir('back');
   $('frcCopy').onclick = () => { navigator.clipboard?.writeText(frcAcct?.payout || ''); $('frcMenu').hidden = true; };
+  $('frcOpen').onclick = () => { $('frcMenu').hidden = true; window.open('/', '_blank', 'noopener'); };
   $('frcOff').onclick = () => { frcAcct = null; localStorage.removeItem(A_KEY); $('frcMenu').hidden = true; paintFrcPill(); };
   document.addEventListener('click', e => { if (!$('frcWrap').contains(e.target)) $('frcMenu').hidden = true; });
   $('frcConnect').onclick = () => {

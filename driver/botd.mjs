@@ -40,7 +40,12 @@ for (const f of readdirSync(DIR)) if (f.endsWith('.json')) {
 }
 const store = s => { writeFileSync(`${DIR}/${s.id}.json`, JSON.stringify(s, null, 2)); swaps.set(s.id, s); return s; };
 
+const MIN_GAS = 300000000n;   // 0.3 TON — enough to answer at least one swap (deploy+fund+claim)
 let tctx = null;
+async function gasOk() {
+  try { return (await (await ton()).client.getBalance((await ton()).wallet.address)) >= MIN_GAS; }
+  catch { return true; }   // don't block on a transient RPC error
+}
 async function ton() {
   if (!tctx) {
     const client = await tonClient(CFG.ton);
@@ -67,6 +72,7 @@ const api = {
   },
 
   async offer(b) {
+    if (!await gasOk()) throw new Error('обменник временно недоступен — пополняется, попробуйте позже');
     const jettons = BigInt(b.jettons ?? 0);
     if (jettons < BigInt(CFG.minJettons) || jettons > BigInt(CFG.maxJettons)) throw new Error('сумма вне лимитов');
     if (!/^[0-9a-f]{64}$/.test(b.hash ?? '')) throw new Error('bad hash');
@@ -117,6 +123,7 @@ const api = {
   // refundable to themselves. We answer by locking jettons claimable by them. They claim the
   // jettons — revealing the secret on TON — and we read it off TON to claim the FRC.
   async offerReverse(b) {
+    if (!await gasOk()) throw new Error('обменник временно недоступен — пополняется, попробуйте позже');
     const jettons = BigInt(b.jettons ?? 0);
     if (jettons < BigInt(CFG.minJettons) || jettons > BigInt(CFG.maxJettons)) throw new Error('сумма вне лимитов');
     if (!/^[0-9a-f]{64}$/.test(b.hash ?? '')) throw new Error('bad hash');
