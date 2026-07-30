@@ -210,8 +210,10 @@ async function pollReverse() {
 }
 
 // claim the jettons — this is what publishes the secret and lets the other side take the coins
+// The jettons are locked for the visitor; claiming them is THEIR action, so the button becomes
+// one — «Забрать покупку» — and pressing it (re)fires the Tonkeeper request. A dismissed wallet
+// prompt is retryable instead of a dead "deal running…" label.
 async function takeJettons(st) {
-  show('status', 'Токены заперты. Забираем — подтверди в Tonkeeper…');
   const walletCode = await jettonFacts();
   const data = beginCell()
     .storeUint(BigInt('0x' + deal.hash), 256).storeUint(deal.tonDeadline, 32)
@@ -219,13 +221,27 @@ async function takeJettons(st) {
     .storeRef(beginCell().storeAddress(Address.parse(quote.master)).storeAddress(Address.parse(deal.tonSender)).storeAddress(Address.parse(deal.tonRecipient)).endCell())
     .storeRef(walletCode).endCell();
   const htlc = contractAddress(0, { code: Cell.fromBase64(HTLC_CODE_B64), data });
-  await ui.sendTransaction({
-    validUntil: Math.floor(Date.now() / 1000) + 300,
-    messages: [{ address: htlc.toString(), amount: toNano('0.1').toString(),
-      payload: beginCell().storeUint(0x636c6169, 32).storeUint(2n, 64).storeBuffer(Buffer.from(deal.secret, 'hex')).endCell().toBoc().toString('base64') }],
-  });
-  deal.phase = 'claimed'; save(deal);
-  finishReverse();
+  const claim = async () => {
+    show('status', 'подтверди в Tonkeeper…');
+    $('go').disabled = true;
+    try {
+      await ui.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 300,
+        messages: [{ address: htlc.toString(), amount: toNano('0.1').toString(),
+          payload: beginCell().storeUint(0x636c6169, 32).storeUint(2n, 64).storeBuffer(Buffer.from(deal.secret, 'hex')).endCell().toBoc().toString('base64') }],
+      });
+      deal.phase = 'claimed'; save(deal);
+      finishReverse();
+    } catch (e) {
+      show('status', 'выкуп не подтверждён — нажми «Забрать покупку», чтобы попробовать снова');
+      $('go').disabled = false;
+    }
+  };
+  const go = $('go');
+  go.disabled = false; go.textContent = 'Забрать покупку';
+  go.onclick = claim;
+  show('status', 'Токены заперты и ждут тебя.');
+  claim();                                   // fire the first attempt right away
 }
 
 function finishReverse() {
