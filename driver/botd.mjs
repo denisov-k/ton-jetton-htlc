@@ -282,7 +282,29 @@ async function tickReverse(s, t, secsLeft) {
     log(s.id, 'done: FRC claimed', claim.txid);
   }
 
-  // stuck: the visitor never claimed, our FRC window passed. Refund the jettons once their deadline hits.
+  // Stuck: the visitor never claimed inside our FRC window. The deal is not dead — if the secret
+  // appears on TON we can still try the FRC claim (the visitor has no refund tooling yet, so the
+  // race is theoretical), and finishing beats forfeiting. Watch for it until their deadline.
+  if (s.state === 'reverse-stuck' && secsLeft > 0) {
+    const tl = tonLock({ codeCell: HTLC_CODE, paymentHash: s.hash, deadline: s.tonDeadline,
+      master: Address.parse(CFG.ton.jettonMaster), walletCode: t.j.walletCode, governed: CFG.ton.governed,
+      sender: t.wallet.address, recipient: Address.parse(s.tonRecipient) });
+    const preimage = await (await import('./ton-leg.mjs')).tonRevealedPreimage(t.client, tl);
+    if (preimage && sha256hex(Buffer.from(preimage, 'hex')) === s.hash) {
+      log(s.id, 'secret appeared after our window — attempting the FRC claim anyway');
+      try {
+        const claim = (await import('./frc-leg.mjs')).frcClaim({ node,
+          lock: { leaf: s.frcLockLeaf, cltv: s.frcCltv },
+          funding: { txid: s.frcLockInfo.txid, vout: s.frcLockInfo.vout, value: BigInt(s.frcAmount), refheight: s.frcLockInfo.refheight },
+          preimage, claimKey: KEY, toSpk: frcWpkSpk(PUB), fee: BigInt(CFG.frc.fee) });
+        s.state = 'done'; s.preimage = preimage; s.frcClaimTxid = claim.txid; store(s);
+        log(s.id, 'late finish: FRC claimed', claim.txid);
+      } catch (e) { log(s.id, 'late claim failed:', e.message?.slice(0, 120)); }
+    }
+    return;
+  }
+
+  // stuck and their deadline passed too: refund the jettons.
   if (s.state === 'reverse-stuck' && secsLeft <= 0) {
     const tl = tonLock({ codeCell: HTLC_CODE, paymentHash: s.hash, deadline: s.tonDeadline,
       master: Address.parse(CFG.ton.jettonMaster), walletCode: t.j.walletCode, governed: CFG.ton.governed,
